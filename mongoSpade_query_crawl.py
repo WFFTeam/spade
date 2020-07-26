@@ -6,6 +6,7 @@ import pymongo
 import re
 import json
 import unidecode
+import textwrap
 from termcolor import colored
 from datetime import datetime as dt
 import warnings # pymongo warning ingore
@@ -38,10 +39,10 @@ def stopwatch(sec):
     while sec:
         minn, secc = divmod(sec, 60)
         timeformat = '{:02d}:{:02d}'.format(minn, secc)
-        print(timeformat, end='\r')
+        print(timeformat, end='')
         time.sleep(1)
         sec -= 1
-    print('Goodbye!\n')
+    print('Continuing!\n')
 
 def json_timestamp():
     now = dt.now()
@@ -67,7 +68,7 @@ def mongodb_query_search(load_num_queries):
         return list_queries
 
     except Exception as error:
-        print(red(f'ERROR --- Export of queries from DB interrupted'))
+        print(red("ERROR --- Export of queries from DB interrupted"))
         print(yellow("Error code: ") + red(error))
         query_search_error = "!!!ERROR!!!"
         return query_search_error
@@ -84,7 +85,7 @@ def mongodb_completed_query_copy(fetched_query):
         backup_query = db_cm.insert_one(fetched_query)
         print(green("Copied ") + cyan(fetched_query["_id"]) + green(" query to backup collection ") + cyan(collection_name))
     except Exception as error:
-        print(red(f'ERROR --- Export of fetched queries interrupted'))
+        print(red("ERROR --- Export of fetched queries interrupted"))
         print(yellow("Error code: ") + red(error))
 
 def mongodb_query_delete(query_delete):
@@ -137,10 +138,11 @@ def googler_search(googler_query):
             googler_search_result = ([i, url])
             googler_search_result_list.append(googler_search_result)
             clear()
-
             print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
-            print(green(f'Searching Google and extracting results url for string {cyan(googler_query)}'))
-            
+
+            googler_query_sanitized = unidecode.unidecode(re.sub(r'\.+', "_", re.sub('[\W_]', '.', googler_query)))
+            googler_query_short = '_'.join(googler_query_sanitized.split("_")[:12]) + "..."
+            print(green("Searching Google and extracting results url for string ") + cyan(googler_query_short))
             print(green(f'No. {i} --- {yellow(googler_search_result[1])}'))
             if progBarMult == 100:
                 progSign = -1
@@ -187,6 +189,23 @@ def mongodb_google_results_import(fetched_query):
         print(red(f'ERROR --- Import of queries into DB interrupted by error'))
         print(yellow("Error code: ") + red(error))
 
+def mongodb_bs4_results_import(bs4_results):
+    collection_name = "BEAUTIFULSOUP"
+    dbuser = urllib.parse.quote_plus(db_u)
+    dbpass = urllib.parse.quote_plus(db_p)
+    
+    mng_client = pymongo.MongoClient('mongodb://%s:%s@%s:%s/%s' % (dbuser, dbpass, dbhost, dbport, user_db))
+    mng_db = mng_client[database_name]
+    db_cm = mng_db[collection_name]
+
+    try:
+        bs4_results_collection = db_cm.insert_one(bs4_results_dict)
+        print(green(f'Results for {cyan(bs4_results["Title"])} imported to collection {yellow(collection_name)}'))
+
+    except Exception as error:
+        print(red(f'ERROR --- Import of bs4 output into DB interrupted by error'))
+        print(yellow("Error code: ") + red(error))
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--number", "-n", help="--number [number of queries to load from database]")
@@ -220,6 +239,19 @@ def main():
                 mongodb_completed_query_copy(fetched_query)
                 mongodb_query_delete(query_delete)
                 mongodb_google_results_import(fetched_query)
+                UrlList = googler_search_result_list
+                for url in UrlList:
+                    bs_result = beautifulsoup_scrape(url)
+                    if bs_result[2] != "!!!ERROR!!!":
+                        title_text = bs_result[0]
+                        found_mail = bs_result[1]
+                        link_list = bs_result[2]
+                        url_addr = url
+                        bs4_results = ([title_text, found_mail, link_list])
+                        bs4_results_dict = ({'Title': title_text, 'Email': found_mail, 'Links': link_list})
+                        bs4_results_list.append(bs4_results)
+                        mongodb_bs4_results_import(bs4_results_dict)
+
 
         else:
             print(red("ERROR --- Query result atypical."))
