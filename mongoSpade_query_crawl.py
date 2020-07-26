@@ -46,7 +46,7 @@ def stopwatch(sec):
         print(timeformat, end='')
         time.sleep(1)
         sec -= 1
-    print('Continuing!')
+    print("Continuing!")
 
 def json_timestamp():
     now = dt.now()
