@@ -136,12 +136,8 @@ def googler_search(googler_query):
             i += 1
             googler_search_result = ([i, url])
             googler_search_result_list.append(googler_search_result)
-
-          # result_number = googler_search_result[0]
-          # result_url = googler_search_result[1]
-          # googler_search_result_dict = {'Number': result_number, 'Url': result_url}
-          # googler_result_dict_list.append(googler_search_result_dict)
             clear()
+
             print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
             print(green(f'Searching Google and extracting results url for string {cyan(googler_query)}'))
             
@@ -170,7 +166,9 @@ def googler_search(googler_query):
             print(red('Too many requests; temporarily blocked by Google'))
             print(yellow("Sleeping for 600 secs"))
             stopwatch(600)
-    
+    except Exception as error:
+        print(red(f'ERROR --- Searching interrupted by exception'))
+        print(yellow("Error code: ") + red(error))
 
 def mongodb_google_results_import(fetched_query):
     collection_name = "GOOGLE"
@@ -217,13 +215,17 @@ def main():
             googler_search_result_list.append(googler_search_result)
 
             fetched_query = {'_id':_id, 'SequenceNum': seq_num, 'Timestamp': json_time, 'Query': query_string, 'UrlList': googler_search_result_list }
-            query_delete = {'SequenceNum': seq_num}
-            mongodb_completed_query_copy(fetched_query)
-            mongodb_query_delete(query_delete)
-            mongodb_google_results_import(fetched_query)
+            if fetched_query["UrlList"] != 'null':
+                query_delete = {'SequenceNum': seq_num}
+                mongodb_completed_query_copy(fetched_query)
+                mongodb_query_delete(query_delete)
+                mongodb_google_results_import(fetched_query)
+
         else:
-            print(red("ERROR in query"))
-            print(red("query"))
+            print(red("ERROR --- Query result atypical."))
+            print(yellow("Error code: ") + red(query))
+            pass
+    time.sleep(4)
 
 
 if __name__ == "__main__":
