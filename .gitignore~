@@ -1,0 +1,13 @@
+.gitignore
+*.test.*
+*.dev.*
+*.config.*
+config*.*
+__pycache__/
+RESULTS/
+QUERIES/
+components/*.test.*
+components/*.dev.*
+components/config*.*
+components/*.config.*
+components/__pycache__/
