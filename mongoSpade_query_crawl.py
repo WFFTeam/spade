@@ -7,6 +7,10 @@ import re
 import json
 import unidecode
 import textwrap
+import time
+import os
+from googlesearch import search
+from urllib.error import HTTPError
 from termcolor import colored
 from datetime import datetime as dt
 import warnings # pymongo warning ingore
@@ -42,7 +46,7 @@ def stopwatch(sec):
         print(timeformat, end='')
         time.sleep(1)
         sec -= 1
-    print('Continuing!\n')
+    print('Continuing!')
 
 def json_timestamp():
     now = dt.now()
@@ -105,10 +109,7 @@ def mongodb_query_delete(query_delete):
         print(red(error))
         print(" ")
 
-import time
-import os
-from googlesearch import search
-from urllib.error import HTTPError
+
 
 def QueryProgress(currentLine, numOfLines, queryInput):
     print(" ")
