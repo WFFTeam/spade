@@ -91,12 +91,12 @@ def mongodb_completed_query_copy(fetched_query):
     except Exception as error:
         print(red("ERROR --- Export of fetched queries interrupted"))
         print(yellow("Error code: ") + red(error))
+        print(" ")
 
 def mongodb_query_delete(query_delete):
     collection_name = "QUERIES"
     dbuser = urllib.parse.quote_plus(db_u)
     dbpass = urllib.parse.quote_plus(db_p)
-    
     mng_client = pymongo.MongoClient('mongodb://%s:%s@%s:%s/%s' % (dbuser, dbpass, dbhost, dbport, user_db))
     mng_db = mng_client[database_name]
     db_cm = mng_db[collection_name]
@@ -105,11 +105,9 @@ def mongodb_query_delete(query_delete):
         print(green("Deleted ") + cyan(query_delete) + green(f' query from collection {yellow(collection_name)}'))
         print(" ")
     except Exception as error:
-        print(red(f'ERROR IN DB QUERY REMOVAL'))
-        print(red(error))
+        print(red("ERROR --- Removal of finished queries failed"))
+        print(yellow("Error code: ") + red(error))
         print(" ")
-
-
 
 def QueryProgress(currentLine, numOfLines, queryInput):
     print(" ")
