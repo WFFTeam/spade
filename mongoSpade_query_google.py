@@ -275,47 +275,61 @@ def main():
                 UrlList = googler_search_result
                 crawled_url_list = []
                 successful_crawl_count = url_count = bs_error_count = mail_count = 0
-                for i in UrlList:
-                    url = i[1]
-                    url_count += 1
-                    _id = hashlib.md5(url.encode('utf-8')).hexdigest()
-                    json_time = json_timestamp()
-                    bs_result = beautifulsoup_scrape(url)
-                    if bs_result[2] != "!!!ERROR!!!":
-                        error_flag = False
-                        successful_crawl_count += 1
-                        title_text = bs_result[0]
-                        found_mail = bs_result[1]
-                        link_list = bs_result[2]
-                        email_count = 0 + len(found_mail)
-                        if email_count == 0:
-                            found_mail = 'None'
-                        link_counter = 0 + len(link_list)
-                        if link_counter == 0:
-                            link_list = 'None'
-                        url_addr = url
-                        crawled_url_list.append(url_addr)
-                        bs4_results = ([successful_crawl_count, json_time, url_addr, title_text, found_mail, link_list])
-                        bs4_results_dict = ({'_id':_id, 'Timestamp': json_time, 'Num': successful_crawl_count, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'Links': link_list})
-                        
-                        print(yellow(dt_print()) + green("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
-                        print(green(f'Crawling URL {yellow(url_addr[:132])} '))
-                        mongodb_bs4_results_import(bs4_results_dict, error_flag) ### FAILED URL CRAWL TRACKING
-                        print(' ')
+                try:
 
-                    else:
-                        error_flag = True
-                        url_addr = url
-                        error = bs_result[1]
-                        bs_error_count += 1
-                        print(yellow(dt_print()) + red("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
-                        print(yellow(f'Scrape of {red(url_addr[:132])} ') + (yellow("failed")))
-                        print(yellow("Error: beautifulsoup_scrape function encountered an error."))
-                        print(yellow("Error details: ") + red(error))
-                        mongodb_bs4_results_import(bs4_results_dict, error_flag) ### FAILED URL CRAWL TRACKING
-                        print(' ')
+                    for i in UrlList:
+                        url = i[1]
+                        url_count += 1
+                        _id = hashlib.md5(url.encode('utf-8')).hexdigest()
+                        json_time = json_timestamp()
+                        bs_result = beautifulsoup_scrape(url)
+                        if bs_result[2] != "!!!ERROR!!!":
+                            error_flag = False
+                            successful_crawl_count += 1
+                            title_text = bs_result[0]
+                            found_mail = bs_result[1]
+                            link_list = bs_result[2]
+                            email_count = 0 + len(found_mail)
+                            if email_count == 0:
+                                found_mail = 'None'
+                            link_counter = 0 + len(link_list)
+                            if link_counter == 0:
+                                link_list = 'None'
+                            url_addr = url
+                            crawled_url_list.append(url_addr)
+                            bs4_results = ([successful_crawl_count, json_time, url_addr, title_text, found_mail, link_list])
+                            bs4_results_dict = ({'_id':_id, 'Timestamp': json_time, 'Num': successful_crawl_count, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'Links': link_list})
+                            
+                            print(yellow(dt_print()) + green("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+                            print(green(f'Crawling URL {yellow(url_addr[:132])} '))
+                            mongodb_bs4_results_import(bs4_results_dict, error_flag) ### FAILED URL CRAWL TRACKING
+                            print(' ')
 
-                    time.sleep(1)
+                        else:
+                            error_flag = True
+                            url_addr = url
+                            error = bs_result[1]
+                            bs_error_count += 1
+                            print(yellow(dt_print()) + red("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+                            print(yellow(f'Scrape of {red(url_addr[:132])} ') + (yellow("failed")))
+                            print(yellow("Error: beautifulsoup_scrape function encountered an error."))
+                            print(yellow("Error details: ") + red(error))
+                            mongodb_bs4_results_import(bs4_results_dict, error_flag) ### FAILED URL CRAWL TRACKING
+                            print(' ')
+
+                        time.sleep(1)
+                except Exception as error:
+                    print(red(f'Error occured during iteration throught the list of URLS'))
+                    print(yellow("Error details: ") + red(error))
+                    collection_name = "fails"
+                    db_cm = mng_db[collection_name]
+                    try:
+                        bs4_fails_collection = db_cm.insert_one(bs4_results_dict)
+                        print(yellow(f'Imported collection to {red(collection_name)} ') + yellow(f'with _id {red(_id)}'))
+                    except Exception as error:
+                        print(yellow(f'MongoDB secondary import to {red(collection_name)} ') + (yellow("failed")))
+                        pass
+
         else:
             print(yellow(dt_print()) + red("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
             print(red("ERROR --- Query result atypical."))
