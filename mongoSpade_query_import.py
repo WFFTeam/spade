@@ -40,7 +40,7 @@ def json_timestamp():
     return json_timestamp           
                
 def mongodb_query_input(query_dict):
-    collection_name = "QUERIES"
+    collection_name = "queries"
     dbuser = urllib.parse.quote_plus(db_u)
     dbpass = urllib.parse.quote_plus(db_p)
     
@@ -59,7 +59,7 @@ def mongodb_query_input(query_dict):
         return "!!!ERROR!!!"
 
 def mongodb_query_search():
-    collection_name = "QUERIES"
+    collection_name = "queries"
     dbuser = urllib.parse.quote_plus(db_u)
     dbpass = urllib.parse.quote_plus(db_p)
     
@@ -84,13 +84,13 @@ def main():
     parser.add_argument("--list", "-l", help="--list [path to list file to read search queries from, one query per line]")
     parser.add_argument("--query", "-q", help="--query [search string]")
     args = parser.parse_args()
-    print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
     print(green("Importing query(es) to MongoDB"))
     mongoDBstring = "mongodb://" + dbhost.replace("'", "") + ":" + str(dbport)
     last_num = 0
     last_num = int(mongodb_query_search())
     no_of_successful_import = 0
     print(cyan(last_num) + green(" queries pending for crawling"))
+    print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
     if args.list:
         query_file_path = args.list
         file_lines = sum(1 for line in open(query_file_path, 'r'))
@@ -118,13 +118,16 @@ def main():
                 else:
                     no_of_successful_import += 1
 
-            collection_name = "QUERIES"
+            collection_name = "queries"
+            print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
             print(green("DB host: ") + yellow(dbhost))
             print(green("Database name: ") + yellow(database_name))
             print(green("Collection name: ") + yellow(collection_name))
             print(yellow(no_of_successful_import) + green(" queries added to MongoDB pending list."))
-            print(red(error_count) + red(" errors encountered during the import."))
-            
+            if error_count != 0:
+                print(red(error_count) + red(" errors encountered during the import."))
+            else:
+                print(green("No errors occured during the import of queries"))
     elif args.query:
         print(green("Following queries added to DB:"))
         if last_num != 0:

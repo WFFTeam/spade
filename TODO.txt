@@ -1,0 +1,7 @@
+###spade_mongo TODO list:
+
+1 - mongoSpade_query_import.py 		- Import search strings from text file or input to mongoDB 	- DONE
+2 - mongoSpade_query_google.py 		- FIFO fetch search query and get url of results 			- DONE
+3 - mongoSpade_beautifulsoup_scrape 	- Scrape url with beautifulsoup python package		- IN PROGRESS
+4 - mongoSpade_html5_scrape 		- Scrape url with HTML5 python package		
+
