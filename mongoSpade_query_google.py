@@ -192,8 +192,12 @@ def mongodb_google_results_import(fetched_query):
         print(red(f'MongoDB import of URL list failed'))
         print(yellow("Error code: ") + red(error))
 
-def mongodb_bs4_results_import(bs4_results_dict):
-    collection_name = "beautifulsoup"
+def mongodb_bs4_results_import(bs4_results_dict, error_flag):
+    if error_flag is True:
+        collection_name = "fails"
+    else:
+        collection_name = "beautifulsoup"
+        
     dbuser = urllib.parse.quote_plus(db_u)
     dbpass = urllib.parse.quote_plus(db_p)
     
@@ -239,7 +243,7 @@ def main():
         load_num_queries = args.number
     else:
         load_num_queries = 1
-    print(yellow(dt_print()) + green("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+    print(yellow(dt_print()) + green("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
     print(green(f'Grabing queries from collection {yellow(collection_name)} ') + green(f'in database {yellow(database_name)} ') + green(f' on mongoDB host {yellow(dbhost)}'))
     print(green("Grabing ") + cyan(load_num_queries) + green(" queries from MongoDB"))
     queries = mongodb_query_search(load_num_queries)
@@ -278,6 +282,7 @@ def main():
                     json_time = json_timestamp()
                     bs_result = beautifulsoup_scrape(url)
                     if bs_result[2] != "!!!ERROR!!!":
+                        error_flag = False
                         successful_crawl_count += 1
                         title_text = bs_result[0]
                         found_mail = bs_result[1]
@@ -293,12 +298,13 @@ def main():
                         bs4_results = ([successful_crawl_count, json_time, url_addr, title_text, found_mail, link_list])
                         bs4_results_dict = ({'_id':_id, 'Timestamp': json_time, 'Num': successful_crawl_count, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'Links': link_list})
                         
-                        print(yellow(dt_print()) + green("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+                        print(yellow(dt_print()) + green("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
                         print(green(f'Crawling URL {yellow(url_addr[:132])} '))
-                        mongodb_bs4_results_import(bs4_results_dict)
+                        mongodb_bs4_results_import(bs4_results_dict, error_flag) ### FAILED URL CRAWL TRACKING
                         print(' ')
 
                     else:
+                        error_flag = True
                         url_addr = url
                         error = bs_result[1]
                         bs_error_count += 1
@@ -306,6 +312,7 @@ def main():
                         print(yellow(f'Scrape of {red(url_addr[:132])} ') + (yellow("failed")))
                         print(yellow("Error: beautifulsoup_scrape function encountered an error."))
                         print(yellow("Error details: ") + red(error))
+                        mongodb_bs4_results_import(bs4_results_dict, error_flag) ### FAILED URL CRAWL TRACKING
                         print(' ')
 
                     time.sleep(1)
