@@ -46,11 +46,11 @@ def beautifulsoup_scrape(url):
         bs4_result = ([title_text, found_mail, link_list])
         return bs4_result
 
-    except Exception as error:
+    except Exception as e:
         title_error = "BeautifulSoup error"
         mail_error = "BeautifulSoup error"
-        error_notif = str(error)
-        error_return = ([title_error, mail_error, "!!!ERROR!!!"])
+        error_notif = str(e)
+        error_return = ([title_error, error_notif, "!!!ERROR!!!"])
         return error_return
 
 def main():
