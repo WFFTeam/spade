@@ -6,5 +6,4 @@
 ------------------------------------------------------------------------------------------------------------------
   - mongoSpade_site_tree		- Explore site directory structure and upload results to db
   - mongoSpade_links_crawl		- Crawl local found links, use mongoSpade_site_tree for aiming
-  - mongoSpade_html5_scrape 		- Scrape url with HTML5 python package				
-
+  - mongoSpade_html5_scrape 		- Scrape url with HTML5 python package
