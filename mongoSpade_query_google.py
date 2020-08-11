@@ -400,8 +400,6 @@ def main():
             print(yellow(dt_print()) + red("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
             print(red("ERROR --- Query result atypical."))
             print(yellow("Error code: ") + red(query))
-           #pass
-       #print(cyan(query))
         countdown(wait_time)
 
 
