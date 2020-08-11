@@ -9,6 +9,7 @@ import unidecode
 import textwrap
 import time
 import os
+import sys
 import hashlib
 from googlesearch import search
 from urllib.error import HTTPError
@@ -40,6 +41,16 @@ def dt_print():
     dt_string = now.strftime("%H:%M:%S %d/%m/%Y")
     return dt_string
 
+
+# Nova funkcija za odbrojavanje posto stopwatch() baguje
+def countdown(t):
+    while t > 0:
+        sys.stdout.write(red('\rWaiting for : {}s'.format(t)))
+        t -= 1
+        sys.stdout.flush()
+        time.sleep(1)
+    clear()
+
 def stopwatch(sec):
     while sec:
         minn, secc = divmod(sec, 60)
@@ -66,7 +77,7 @@ def mongodb_query_search(load_num_queries):
     list_queries = []
 
     try:
-        load_queries = db_cm.find().sort('SequenceNum', 1).limit(int(load_num_queries))
+        load_queries = db_cm.find().sort('qnum', 1).limit(int(load_num_queries))
         for item in load_queries:
             last_sequence = item
             list_queries.append(last_sequence)
@@ -115,7 +126,7 @@ def QueryProgress(currentLine, numOfLines, queryInput):
     print(green(dt_print()))
     print(green(f"Fetching results for string: {googler_query}"))
 
-def googler_search(googler_query):
+def googler_search(googler_query, stop_after):
     i = 0
     progBarMult = i
     emptyBarMult = 70
@@ -123,40 +134,53 @@ def googler_search(googler_query):
     googler_search_result_list = []
     googler_query_sanitized = unidecode.unidecode(re.sub(r'\.+', "_", re.sub('[\W_]', '.', googler_query)))
     googler_query_short = ' '.join(googler_query_sanitized.split("_")[:12])
+    
+    # print(cyan(search_args)) ###DEBUG
+    # print(type(search_args)) ###DEBUG
+
     try:
-        for url in search(googler_query + ' -filetype:pdf ',   # The query you want to run
-#                   tld = 'com',  # The top level domain
-#                   lang = 'en',  # The language
-#                   start = 0,    # First result to retrieve
-#                   stop = 30,    # Last result to retrieve
-                    num = 10,     # Number of results per page
-                    pause = 4.0,  # Lapse between HTTP requests
-                    ):
+        if stop_after == 0:
+            for url in search(googler_query + ' -filetype:pdf ',   # The query you want to run
+    #                   tld = 'com',  # The top level domain
+    #                   lang = 'en',  # The language
+    #                   start = 0,    # First result to retrieve
+    #                   stop = 10,    # Last result to retrieve
+                        num = 10,     # Number of results per page
+                        pause = 4.0,  # Lapse between HTTP requests
+                        ):
+    #     else:
+    #         for url in search(googler_query + ' -filetype:pdf ',   # The query you want to run
+    #                     tld = 'com',  # The top level domain
+    #                     lang = 'en',  # The language
+    #                     start = 0,    # First result to retrieve
+    #                     stop = stop_after,    # Last result to retrieve
+    #                     num = 10,     # Number of results per page
+    #                     pause = 4.0,  # Lapse between HTTP requests
+    #                     ):
 
+                time.sleep(0.3)
+                i += 1
+                googler_search_result = [ i, url ]
+                googler_search_result_list.append(googler_search_result)
+                clear()
+                print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
 
-            time.sleep(0.3)
-            i += 1
-            googler_search_result = [ i, url ]
-            googler_search_result_list.append(googler_search_result)
-            clear()
-            print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
-
-            if len(googler_query_short) >= 122:
-                googler_query_short = ' '.join(googler_query_sanitized.split("_")[:12]) + "..."
-            print(green("Searching Google and extracting results url for string ") + cyan(googler_query_short))
-            print(green(f'No. {i} --- {yellow(googler_search_result[1])}'))
-            if progBarMult == 100:
-                progSign = -1
-            if progBarMult == 0:
-                progSign = 1
-            progBarMult = progBarMult + 2 * progSign
-            emptyBarMult = emptyBarMult - progSign
-            emptyBar = " " * emptyBarMult
-            print(' ')
-            print(cyan(emptyBar + '<=' + "=" * progBarMult + '=>'))
-            print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
-        
-        return googler_search_result_list
+                if len(googler_query_short) >= 122:
+                    googler_query_short = ' '.join(googler_query_sanitized.split("_")[:12]) + "..."
+                print(green("Searching Google and extracting results url for string ") + cyan(googler_query_short))
+                print(green(f'No. {i} --- {yellow(googler_search_result[1])}'))
+                if progBarMult == 100:
+                    progSign = -1
+                if progBarMult == 0:
+                    progSign = 1
+                progBarMult = progBarMult + 2 * progSign
+                emptyBarMult = emptyBarMult - progSign
+                emptyBar = " " * emptyBarMult
+                print(' ')
+                print(cyan(emptyBar + '<=' + "=" * progBarMult + '=>'))
+                print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+            
+            return googler_search_result_list
     except IndexError as e:
         print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
         print(red('Index error occured: ' + str(e.code)))
@@ -166,10 +190,10 @@ def googler_search(googler_query):
         print(red(err))
         if err.code == 429:
             print(red('Too many requests; temporarily blocked by Google'))
-            print(yellow("Sleeping for 600 secs"))
-            stopwatch(600)
+            print(yellow("Sleeping for 1200 secs"))
+            countdown(1200)
             print(green("Retrying..."))
-            googler_search(googler_query)
+            googler_search(googler_query, stop_after)
     except Exception as error:
         print(red(f'ERROR --- Searching interrupted by exception'))
         print(yellow("Error code: ") + red(error))
@@ -205,8 +229,8 @@ def mongodb_bs4_results_import(bs4_results_dict, error_flag):
     mng_db = mng_client[database_name]
     db_cm = mng_db[collection_name]
     page_title = re.sub(r'[\n\r\t]*', '', bs4_results_dict["Title"])
-    email_count = 0 + len(bs4_results_dict["Email"])
-    link_counter = 0 + len(bs4_results_dict["Links"])
+    email_count = bs4_results_dict["Mailnum"]
+    link_counter = bs4_results_dict["Linknum"]
     _id = bs4_results_dict["_id"]
     try:
         bs4_results_collection = db_cm.insert_one(bs4_results_dict)
@@ -237,17 +261,27 @@ def mongodb_bs4_results_import(bs4_results_dict, error_flag):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--number", "-n", help="--number [number of queries to load from database]")
+    parser.add_argument("--wait", "-w", help="--wait [time in seconds to pause between queries]")
+    parser.add_argument("--stop", "-s", help="--stop [number of results after which to continue to next query]")
     args = parser.parse_args()
     collection_name = "queries" 
     if args.number:
         load_num_queries = args.number
     else:
         load_num_queries = 1
+    if args.wait:
+        wait_time = int(args.wait)
+    else:
+        wait_time = 5
+    if args.stop:
+        stop_after = int(args.stop)
+    else:
+        stop_after = 0
     print(yellow(dt_print()) + green("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
     print(green(f'Grabing queries from collection {yellow(collection_name)} ') + green(f'in database {yellow(database_name)} ') + green(f' on mongoDB host {yellow(dbhost)}'))
     print(green("Grabing ") + cyan(load_num_queries) + green(" queries from MongoDB"))
     queries = mongodb_query_search(load_num_queries)
-    SequenceNum = 0
+    qnum = 0
     if not queries:
         print(yellow("No queries in specified collection"))
         print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
@@ -256,17 +290,16 @@ def main():
 
         if query != "!!!ERROR!!!":
             _id = query["_id"]
-            seq_num = query["SequenceNum"]
+            seq_num = query["qnum"]
             json_time = json_timestamp()
             query_string = query["Query"]
             
             googler_query = re.sub(r'[\n\r\t]*', '', query_string)
-            extended_query = googler_query
-            googler_search_result = googler_search(extended_query)
+            googler_search_result = googler_search(googler_query, stop_after)
 
-            fetched_query = {'_id':_id, 'SequenceNum': seq_num, 'Timestamp': json_time, 'Query': query_string, 'UrlList': googler_search_result}
+            fetched_query = {'_id':_id, 'qnum': seq_num, 'Timestamp': json_time, 'Query': query_string, 'UrlList': googler_search_result}
             if fetched_query["UrlList"] != 'null':
-                query_delete = {'SequenceNum': seq_num}
+                query_delete = {'qnum': seq_num}
                 mongodb_completed_query_copy(fetched_query)
                 mongodb_query_delete(query_delete)
                 mongodb_google_results_import(fetched_query)
@@ -302,7 +335,8 @@ def main():
                             
                             print(yellow(dt_print()) + green("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
                             print(green(f'Crawling URL {yellow(url_addr[:132])} '))
-                            mongodb_bs4_results_import(bs4_results_dict, error_flag) ### FAILED URL CRAWL TRACKING
+                            mongodb_bs4_results_import(bs4_results_dict, error_flag)
+
                             print(' ')
 
                         else:
@@ -310,10 +344,12 @@ def main():
                             url_addr = url
                             error = bs_result[1]
                             bs_error_count += 1
-                            print(yellow(dt_print()) + red("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+                            url_addr = url
+                            print(yellow(dt_print()) + red("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
                             print(yellow(f'Scrape of {red(url_addr[:132])} ') + (yellow("failed")))
                             print(yellow("Error: beautifulsoup_scrape function encountered an error."))
                             print(yellow("Error details: ") + red(error))
+                            bs4_results_dict = ({'_id':_id, 'Timestamp': json_time, 'Num': bs_error_count, 'URL': url_addr, 'Title': "bs4_Error", 'Mailnum': 0, 'Email': 'None', 'Linknum': 0, 'Links': 'None', 'ErrorInfo': error})
                             mongodb_bs4_results_import(bs4_results_dict, error_flag) ### FAILED URL CRAWL TRACKING
                             print(' ')
 
@@ -322,20 +358,21 @@ def main():
                     print(red(f'Error occured during iteration throught the list of URLS'))
                     print(yellow("Error details: ") + red(error))
                     collection_name = "fails"
-                    db_cm = mng_db[collection_name]
-                    try:
-                        bs4_fails_collection = db_cm.insert_one(bs4_results_dict)
-                        print(yellow(f'Imported collection to {red(collection_name)} ') + yellow(f'with _id {red(_id)}'))
-                    except Exception as error:
-                        print(yellow(f'MongoDB secondary import to {red(collection_name)} ') + (yellow("failed")))
-                        pass
+                   #db_cm = mng_db[collection_name]
+                   #try:
+                   #    bs4_fails_collection = db_cm.insert_one(bs4_results_dict)
+                   #    print(yellow(f'Imported collection to {red(collection_name)} ') + yellow(f'with _id {red(_id)}'))
+                   #except Exception as error:
+                   #    print(yellow(f'MongoDB secondary import to {red(collection_name)} ') + (yellow("failed")))
+                   #pass
 
         else:
             print(yellow(dt_print()) + red("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
             print(red("ERROR --- Query result atypical."))
             print(yellow("Error code: ") + red(query))
-            pass
-        time.sleep(4)
+           #pass
+        print(cyan(query))
+        countdown(wait_time)
 
 
 if __name__ == "__main__":

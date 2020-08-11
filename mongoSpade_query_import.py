@@ -50,7 +50,7 @@ def mongodb_query_input(query_dict):
 
     try:
         queries_db = db_cm.insert_one(query_dict)
-        print(green(f'String {cyan(query_dict["Query"])} imported as string number {yellow(query_dict["SequenceNum"])}'))
+        print(green(f'String {cyan(query_dict["Query"])} imported as string number {yellow(query_dict["qnum"])}'))
 
     except Exception as error:
         print(red(f'ERROR --- Import of query into database failed'))
@@ -69,7 +69,7 @@ def mongodb_query_search():
     last_sequence = 0
 
     try:
-        list_sequence = db_cm.find().sort('SequenceNum', -1).limit(1)
+        list_sequence = db_cm.find().sort('qnum', -1).limit(1)
         for item in list_sequence:
             last_sequence = (str(item).split(",")[1].split(":")[1].lstrip())
         return last_sequence
@@ -110,7 +110,7 @@ def main():
                 sanitized_query = unidecode.unidecode(re.sub(r'\.+', "_", re.sub('[\W_]', '.', query)))
                 _id = '_'.join(sanitized_query.split("_")[:12])
                 json_time = json_timestamp()
-                query_dict = {'_id': _id, 'SequenceNum': seq_num, 'Timestamp': json_time, 'Query': query }
+                query_dict = {'_id': _id, 'qnum': seq_num, 'Timestamp': json_time, 'Query': query }
                 query_input = mongodb_query_input(query_dict)
                 if query_input == "!!!ERROR!!!":
                     seq_num -= 1
@@ -141,7 +141,7 @@ def main():
         _id = '_'.join(sanitized_query.split("_")[:12])
         seq_num = last_num +1
         json_time = json_timestamp()
-        query_dict = {'_id': _id, 'SequenceNum': seq_num, 'Timestamp': json_time, 'Query': query }
+        query_dict = {'_id': _id, 'qnum': seq_num, 'Timestamp': json_time, 'Query': query }
         query_input = mongodb_query_input(query_dict)
         if query_input == "!!!ERROR!!!":
             seq_num -= 1
