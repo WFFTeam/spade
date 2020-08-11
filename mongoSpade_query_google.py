@@ -403,6 +403,11 @@ def main():
             print(yellow(dt_print()) + red("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
             print(red("ERROR --- Query result atypical."))
             print(yellow("Error code: ") + red(query))
+
+        total_urls = skipped_url_count + successful_crawl_count + bs_error_count
+        print(cyan(dt_print()) + yellow("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+        print(cyan(f'From {cyan(total_urls)} URLs ') + (red(bs_error_count)) + red("failed, ") + yellow(skipped_url_count) + yellow("skipped and ") + green(successful_crawl_count) + green("successfully crawled."))
+
         countdown(wait_time)
 
 
