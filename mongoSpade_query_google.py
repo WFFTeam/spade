@@ -145,7 +145,7 @@ def googler_search(googler_query, stop_after):
     #                   tld = 'com',  # The top level domain
     #                   lang = 'en',  # The language
     #                   start = 0,    # First result to retrieve
-    #                   stop = 30,    # Last result to retrieve
+    #                   stop = 10,    # Last result to retrieve
                         num = 10,     # Number of results per page
                         pause = 4.0,  # Lapse between HTTP requests
                         ):
@@ -248,7 +248,10 @@ def mongodb_bs4_results_import(bs4_results_dict, error_flag):
         else:
             print(green(f'Found {red(link_counter)} ') + green('links '))
 
-        print(green(f'Successfully imported to collection {cyan(collection_name)} ') + green(f'with _id {cyan(_id)}'))
+        if db_cm.count_documents({ '_id': _id }, limit = 1) != 0:
+            print(green(f'Successfully imported to collection {cyan(collection_name)} ') + green(f'with _id {cyan(_id)}'))
+        else:
+            print(red(f'Cant seem to find the imported document in the collection {cyan(collection_name)}' + red(f'with _id {cyan(_id)}')))
 
     except Exception as error:
         print(red(f'MongoDB import of beautiful_soup_scrape failed'))
