@@ -16,7 +16,7 @@ from googlesearch import search
 from urllib.error import HTTPError
 from termcolor import colored
 from datetime import datetime as dt
-import warnings # pymongo warning ingore
+import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from components import *
@@ -146,6 +146,9 @@ def googler_search(googler_query, stop_after):
                         num = 10,     # Number of results per page
                         pause = 4.0,  # Lapse between HTTP requests
                         ):
+    
+    ############################################################################################ 
+    # FIX DEMO MODE (stop_after)       
     #     else:
     #         for url in search(googler_query + ' -filetype:pdf ',   # The query you want to run
     #                     tld = 'com',  # The top level domain
@@ -155,7 +158,7 @@ def googler_search(googler_query, stop_after):
     #                     num = 10,     # Number of results per page
     #                     pause = 4.0,  # Lapse between HTTP requests
     #                     ):
-
+    ############################################################################################
                 time.sleep(0.3)
                 i += 1
                 googler_search_result = [ i, url ]
@@ -267,7 +270,7 @@ def mongodb_bs4_results_import(bs4_results_dict, error_flag):
 # def mongodb_bs4_links_append(_id, bs_link_result_dict):
 #     dbuser = urllib.parse.quote_plus(db_u)
 #     dbpass = urllib.parse.quote_plus(db_p)
-    
+#   
 #     mng_client = pymongo.MongoClient('mongodb://%s:%s@%s:%s/%s' % (dbuser, dbpass, dbhost, dbport, user_db))
 #     mng_db = mng_client[database_name]
 #     db_cm = mng_db[collection_name]
@@ -423,7 +426,7 @@ def main():
                             #             print(green(f'Crawling link {yellow(url_addr[:132])} '))
                             #             mongodb_bs4_links_append(_id, bs_link_result_dict)
                             #             print(' ')
-
+                            #
                             ######################################################
                         else:
                             error_flag = True
@@ -444,6 +447,8 @@ def main():
                     print(red(f'Error occured during iteration throught the list of URLS'))
                     print(yellow("Error details: ") + red(error))
                     collection_name = "fails"
+                   ######################################################
+                   # EXCEPTION NOT WORKING CORRECTLY
                    #db_cm = mng_db[collection_name]
                    #try:
                    #    bs4_fails_collection = db_cm.insert_one(bs4_results_dict)
@@ -451,7 +456,7 @@ def main():
                    #except Exception as error:
                    #    print(yellow(f'MongoDB secondary import to {red(collection_name)} ') + (yellow("failed")))
                    #pass
-
+                   ######################################################
         else:
             print(yellow(dt_print()) + red("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
             print(red("ERROR --- Query result atypical."))
@@ -459,7 +464,7 @@ def main():
 
         total_urls = skipped_url_count + successful_crawl_count + bs_error_count
         print(cyan(dt_print()) + yellow("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
-        print(cyan(f'From {cyan(total_urls)} URLs ') + (red(bs_error_count)) + red(" failed, ") + yellow(skipped_url_count) + yellow(" skipped and ") + green(successful_crawl_count) + green(" successfully crawled."))
+        print(cyan("From " + total_urls + " URLs, ") + (red(bs_error_count)) + red(" failed, ") + yellow(skipped_url_count) + yellow(" skipped and ") + green(successful_crawl_count) + green(" successfully crawled."))
 
         countdown(wait_time)
 
