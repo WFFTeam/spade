@@ -11,6 +11,7 @@ import time
 import os
 import sys
 import hashlib
+import typing
 from googlesearch import search
 from urllib.error import HTTPError
 from termcolor import colored
@@ -144,7 +145,7 @@ def googler_search(googler_query, stop_after):
     #                   tld = 'com',  # The top level domain
     #                   lang = 'en',  # The language
     #                   start = 0,    # First result to retrieve
-    #                   stop = 10,    # Last result to retrieve
+                        stop = 30,    # Last result to retrieve
                         num = 10,     # Number of results per page
                         pause = 4.0,  # Lapse between HTTP requests
                         ):
@@ -219,6 +220,8 @@ def mongodb_google_results_import(fetched_query):
 def mongodb_bs4_results_import(bs4_results_dict, error_flag):
     if error_flag is True:
         collection_name = "fails"
+    elif error_flag == 'Skipped':
+        collection_name = "skipped"
     else:
         collection_name = "beautifulsoup"
         
@@ -307,7 +310,8 @@ def main():
 
                 UrlList = googler_search_result
                 crawled_url_list = []
-                successful_crawl_count = url_count = bs_error_count = mail_count = 0
+                skipped_url_list = []
+                successful_crawl_count = url_count = bs_error_count = mail_count = skipped_url_count = 0
                 try:
 
                     for i in UrlList:
@@ -316,12 +320,34 @@ def main():
                         _id = hashlib.md5(url.encode('utf-8')).hexdigest()
                         json_time = json_timestamp()
                         bs_result = beautifulsoup_scrape(url)
-                        if bs_result[2] != "!!!ERROR!!!":
+
+                        if bs_result[2] == "!!!SKIPPED!!!":
+                            error_flag = 'Skipped'
+                            title_text = "Skipped"
+                            found_mail = "Skipped"
+                            link_list = "Skipped"
+                            urlparse_host = bs_result[3]
+                            email_count = 0
+                            link_counter = 0
+                            skipped_url_count += 1
+                            url_addr = url
+                            skipped_url_list.append(url_addr)
+                            bs4_results = ([skipped_url_count, json_time, url_addr, title_text, found_mail, link_list])
+                            print(yellow(dt_print()) + yellow("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+                            print(yellow(f'Scrape of {yellow(url_addr[:132])} ') + (red("skipped")))
+                            print(red("Host found in config_skips file"))
+                            print(yellow("Host: ") + red(urlparse_host))
+                            bs4_results_dict = ({'_id':_id, 'Timestamp': json_time, 'Num': skipped_url_count, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'Links': link_list})
+                            mongodb_bs4_results_import(bs4_results_dict, error_flag)
+                            print(' ')
+
+                        elif bs_result[2] != "!!!ERROR!!!":
                             error_flag = False
                             successful_crawl_count += 1
                             title_text = bs_result[0]
                             found_mail = bs_result[1]
                             link_list = bs_result[2]
+                            urlparse_host = bs_result[3]
                             email_count = 0 + len(found_mail)
                             if email_count == 0:
                                 found_mail = 'None'
@@ -336,8 +362,12 @@ def main():
                             print(yellow(dt_print()) + green("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
                             print(green(f'Crawling URL {yellow(url_addr[:132])} '))
                             mongodb_bs4_results_import(bs4_results_dict, error_flag)
-
                             print(' ')
+                            ### FOUND LINK CRAWL
+                            # if isinstance(link_list, list):
+                            #     for link in link_list:
+                            #         json_time = json_timestamp()
+                            #         bs_result = beautifulsoup_scrape(url)
 
                         else:
                             error_flag = True
@@ -371,7 +401,7 @@ def main():
             print(red("ERROR --- Query result atypical."))
             print(yellow("Error code: ") + red(query))
            #pass
-        print(cyan(query))
+       #print(cyan(query))
         countdown(wait_time)
 
 
