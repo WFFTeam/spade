@@ -137,51 +137,37 @@ def googler_search(googler_query, stop_after):
     googler_query_short = ' '.join(googler_query_sanitized.split("_")[:12])
 
     try:
-        if stop_after == 0:
-            for url in search(googler_query + ' -filetype:pdf ',   # The query you want to run
-    #                   tld = 'com',  # The top level domain
-    #                   lang = 'en',  # The language
-    #                   start = 0,    # First result to retrieve
-                        stop = 10,    # Last result to retrieve
-                        num = 10,     # Number of results per page
-                        pause = 4.0,  # Lapse between HTTP requests
-                        ):
-    
-    ############################################################################################ 
-    # FIX DEMO MODE (stop_after)       
-    #     else:
-    #         for url in search(googler_query + ' -filetype:pdf ',   # The query you want to run
-    #                     tld = 'com',  # The top level domain
-    #                     lang = 'en',  # The language
-    #                     start = 0,    # First result to retrieve
-    #                     stop = stop_after,    # Last result to retrieve
-    #                     num = 10,     # Number of results per page
-    #                     pause = 4.0,  # Lapse between HTTP requests
-    #                     ):
-    ############################################################################################
-                time.sleep(0.3)
-                i += 1
-                googler_search_result = [ i, url ]
-                googler_search_result_list.append(googler_search_result)
-                clear()
-                print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+        for url in search(googler_query + ' -filetype:pdf ',   # The query you want to run
+#                   tld = 'com',  # The top level domain
+#                   lang = 'en',  # The language
+#                   start = 0,    # First result to retrieve
+                    stop = stop_after,    # Last result to retrieve
+                    num = 10,     # Number of results per page
+                    pause = 4.0,  # Lapse between HTTP requests
+                    ):
+            time.sleep(0.3)
+            i += 1
+            googler_search_result = [ i, url ]
+            googler_search_result_list.append(googler_search_result)
+            clear()
+            print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
 
-                if len(googler_query_short) >= 122:
-                    googler_query_short = ' '.join(googler_query_sanitized.split("_")[:12]) + "..."
-                print(green("Searching Google and extracting results url for string ") + cyan(googler_query_short))
-                print(green(f'No. {i} --- {yellow(googler_search_result[1])}'))
-                if progBarMult == 100:
-                    progSign = -1
-                if progBarMult == 0:
-                    progSign = 1
-                progBarMult = progBarMult + 2 * progSign
-                emptyBarMult = emptyBarMult - progSign
-                emptyBar = " " * emptyBarMult
-                print(' ')
-                print(cyan(emptyBar + '<=' + "=" * progBarMult + '=>'))
-                print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
-            
-            return googler_search_result_list
+            if len(googler_query_short) >= 122:
+                googler_query_short = ' '.join(googler_query_sanitized.split("_")[:12]) + "..."
+            print(green("Searching Google and extracting results url for string ") + cyan(googler_query_short))
+            print(green(f'No. {i} --- {yellow(googler_search_result[1])}'))
+            if progBarMult == 100:
+                progSign = -1
+            if progBarMult == 0:
+                progSign = 1
+            progBarMult = progBarMult + 2 * progSign
+            emptyBarMult = emptyBarMult - progSign
+            emptyBar = " " * emptyBarMult
+            print(' ')
+            print(cyan(emptyBar + '<=' + "=" * progBarMult + '=>'))
+            print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+        
+        return googler_search_result_list
     except IndexError as e:
         print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
         print(red('Index error occured: ' + str(e.code)))
@@ -265,7 +251,6 @@ def mongodb_bs4_results_import(bs4_results_dict, error_flag):
             print(yellow(f'MongoDB secondary import to {red(collection_name)} ') + (yellow("failed")))
             pass
 
-###WIP Link scrape results import
 def mongodb_bs4_link_result_append(_id, bs_link_result_dict):
     dbuser = urllib.parse.quote_plus(db_u)
     dbpass = urllib.parse.quote_plus(db_p)
@@ -440,13 +425,8 @@ def main():
 
                             link_num = 0
                             crawled_link_list = []
-                           #DEBUG
-                           #print(yellow(dt_print()) + red("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
-                           #print(cyan(isinstance(link_list, list))) ###DEBUG
-                           #print(yellow(dt_print()) + red("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
                             if isinstance(link_list, list):
                                 for url in link_list:
-                            #SREDITI DA LISTA NEMA PONAVLJANJA
                                     try:
                                         link_url = url
                                         link_id = hashlib.md5(link_url.encode('utf-8')).hexdigest()
