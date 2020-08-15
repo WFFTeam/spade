@@ -271,7 +271,6 @@ def mongodb_bs4_link_result_append(_id, bs_link_result_dict):
     link_counter = bs_link_result_dict["Linknum"]
     link_list = bs_link_result_dict["Links"]
     link_host = bs_link_result_dict["Host"]
-   #link_seqnum = ("Link" + str(link_num))
 
   
     try:
@@ -340,7 +339,7 @@ def main():
         stop_after = int(args.stop)
     else:
         stop_after = 0
-    print(yellow(dt_print()) + green("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+    print(yellow(dt_print()) + yellow("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
     print(green(f'Grabing queries from collection {yellow(collection_name)} ') + green(f'in database {yellow(database_name)} ') + green(f' on mongoDB host {yellow(dbhost)}'))
     print(green("Grabing ") + cyan(load_num_queries) + green(" queries from MongoDB"))
     queries = mongodb_query_search(load_num_queries)
@@ -368,6 +367,8 @@ def main():
 
 
                 UrlList = googler_search_result
+                num_url = 0 + len(UrlList)
+
                 crawled_url_list = []
                 skipped_url_list = []
                 successful_crawl_count = url_count = bs_error_count = mail_count = skipped_url_count = 0
@@ -392,7 +393,8 @@ def main():
                             url_addr = url
                             skipped_url_list.append(url_addr)
                             bs4_results = ([skipped_url_count, json_time, url_addr, title_text, found_mail, link_list])
-                            print(yellow(dt_print()) + yellow("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+                           #print(yellow(dt_print()) + yellow("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+                            print(yellow(dt_print()) + yellow("  ||  URL ") + green(str(url_count) + " of " + str(num_url)) + yellow(" ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
                             print(yellow(f'Scrape of {yellow(url_addr[:132])} ') + (red("skipped")))
                             print(red("Host found in config_skips file"))
                             print(yellow("Host: ") + red(urlparse_host))
@@ -418,7 +420,7 @@ def main():
                             bs4_results = ([successful_crawl_count, json_time, url_addr, title_text, found_mail, link_list])
                             bs4_results_dict = ({'_id':_id, 'Timestamp': json_time, 'Num': successful_crawl_count, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'Links': link_list, 'Host': urlparse_host})
                             
-                            print(yellow(dt_print()) + green("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+                            print(yellow(dt_print()) + green("  ||  URL ") + green(str(url_count) + " of " + str(num_url)) + yellow(" ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
                             print(green(f'Crawling URL {yellow(url_addr[:132])} '))
                             mongodb_bs4_results_import(bs4_results_dict, error_flag)
                             print(' ')
@@ -433,9 +435,27 @@ def main():
                                         json_time = json_timestamp()
                                         link_already_crawled = mongodb_bs4_link_search(link_id)
                                         link_num += 1
-                                        if link_already_crawled != True:
+                                        skipped_link_count = 0
+                                        if link_already_crawled is not True:
                                             bs_link_result = beautifulsoup_scrape(link_url)
-                                            if bs_link_result[2] != "!!!ERROR!!!":
+                                           #print(cyan(bs_link_result[2])) ###DEBUG
+                                            if bs_link_result[2] == "!!!SKIPPED!!!":
+                                                error_flag = 'Skipped'
+                                                link_title_text = "Skipped"
+                                                link_found_mail = "Skipped"
+                                                link_link_list = "Skipped"
+                                                link_urlparse_host = bs_result[3]
+                                                link_email_count = 0
+                                                link_link_counter = 0
+                                                skipped_link_count += 1
+                                                link_url_addr = link_url
+
+                                                print(green(f'      Crawling link {yellow(link_num)}') + green(f' of {yellow(link_counter)}'))
+                                                print(green(f'      Link URL: {yellow(link_url_addr[:132])}'))
+                                                print("      " + cyan(link_id) + yellow(' link skipped'))
+                                                print(' ')
+
+                                            elif bs_link_result[2] != "!!!ERROR!!!":
                                                 link_title_text = bs_link_result[0]
                                                 link_found_mail = bs_link_result[1]
                                                 link_link_list = bs_link_result[2]
@@ -454,6 +474,15 @@ def main():
                                                 print(green(f'      Crawling link {yellow(link_num)}') + green(f' of {yellow(link_counter)}'))
                                                 print(green(f'      Link URL: {yellow(link_url_addr[:132])}'))
                                                 mongodb_bs4_link_result_append(_id, bs_link_result_dict)
+                                                print(' ')
+                                            else:
+                                                error_flag = True
+                                                link_url_addr = link_url
+                                                error = bs_link_result[1]
+                                                print(green(f'      Crawling link {yellow(link_num)}') + green(f' of {yellow(link_counter)}'))
+                                                print(green(f'      Link URL: {yellow(link_url_addr[:132])}'))
+                                                print("      " + cyan(link_id) + red(' link scraping failed'))
+                                                print(yellow("      Error details: ") + red(error))
                                                 print(' ')
                                         else:
                                             print(green(f'      Crawling link {yellow(link_num)}') + green(f' of {yellow(link_counter)}'))
@@ -502,7 +531,7 @@ def main():
             print(yellow("Error code: ") + red(query))
 
         total_urls = int(skipped_url_count) + int(successful_crawl_count) + int(bs_error_count)
-        print(cyan(dt_print()) + yellow("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+        print(cyan(dt_print()) + yellow("  ||  URL ") + green(str(url_count) + " of " + str(num_url)) + yellow(" ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
         print(cyan("From " + str(total_urls) + " URLs, ") + (red(str(bs_error_count))) + red(" failed, ") + yellow(str(skipped_url_count)) + yellow(" skipped and ") + green(str(successful_crawl_count)) + green(" successfully crawled."))
 
         countdown(wait_time)
