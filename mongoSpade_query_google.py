@@ -275,13 +275,6 @@ def mongodb_bs4_link_result_append(_id, bs_link_result_dict):
   
     try:
         bs4_link_append = db_cm.update_one(filter={'_id':_id}, update={'$set':{ link_id :{'link_id': link_id, 'Timestamp': json_time, 'Num': link_num, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'Links': link_list, 'Host': link_host}}}, upsert=True)
-       #print(cyan("link_url is " + link_url))         ###DEBUG                                        
-       #print(cyan("_id is " + _id))                   ###DEBUG
-       #print(cyan("link_id is " + link_id))           ###DEBUG
-       #bs4_link_collection = db_cm.find({"_id": _id}) ###DEBUG
-       #for i in bs4_link_collection:                  ###DEBUG
-       #    print(i)                                   ###DEBUG
-
         print(green(f'      Link title: {cyan(page_title[:123])} '))
         if email_count != 0:
             print(green(f'      Found {cyan(email_count)} ') + green(f'e-mail addresses '))
@@ -393,8 +386,7 @@ def main():
                             url_addr = url
                             skipped_url_list.append(url_addr)
                             bs4_results = ([skipped_url_count, json_time, url_addr, title_text, found_mail, link_list])
-                           #print(yellow(dt_print()) + yellow("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
-                            print(yellow(dt_print()) + yellow("  ||  URL ") + green(str(url_count) + " of " + str(num_url)) + yellow(" ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+                            print(yellow(dt_print()) + yellow("  ||  URL ") + green(str(url_count) + " of " + str(num_url)) + yellow(" ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
                             print(yellow(f'Scrape of {yellow(url_addr[:132])} ') + (red("skipped")))
                             print(red("Host found in config_skips file"))
                             print(yellow("Host: ") + red(urlparse_host))
@@ -420,7 +412,7 @@ def main():
                             bs4_results = ([successful_crawl_count, json_time, url_addr, title_text, found_mail, link_list])
                             bs4_results_dict = ({'_id':_id, 'Timestamp': json_time, 'Num': successful_crawl_count, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'Links': link_list, 'Host': urlparse_host})
                             
-                            print(yellow(dt_print()) + green("  ||  URL ") + green(str(url_count) + " of " + str(num_url)) + yellow(" ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+                            print(yellow(dt_print()) + green("  ||  URL ") + green(str(url_count) + " of " + str(num_url)) + yellow(" ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
                             print(green(f'Crawling URL {yellow(url_addr[:132])} '))
                             mongodb_bs4_results_import(bs4_results_dict, error_flag)
                             print(' ')
@@ -438,7 +430,6 @@ def main():
                                         skipped_link_count = 0
                                         if link_already_crawled is not True:
                                             bs_link_result = beautifulsoup_scrape(link_url)
-                                           #print(cyan(bs_link_result[2])) ###DEBUG
                                             if bs_link_result[2] == "!!!SKIPPED!!!":
                                                 error_flag = 'Skipped'
                                                 link_title_text = "Skipped"
@@ -531,7 +522,7 @@ def main():
             print(yellow("Error code: ") + red(query))
 
         total_urls = int(skipped_url_count) + int(successful_crawl_count) + int(bs_error_count)
-        print(cyan(dt_print()) + yellow("  ||  URL ") + green(str(url_count) + " of " + str(num_url)) + yellow(" ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+        print(cyan(dt_print()) + yellow(" ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
         print(cyan("From " + str(total_urls) + " URLs, ") + (red(str(bs_error_count))) + red(" failed, ") + yellow(str(skipped_url_count)) + yellow(" skipped and ") + green(str(successful_crawl_count)) + green(" successfully crawled."))
 
         countdown(wait_time)
