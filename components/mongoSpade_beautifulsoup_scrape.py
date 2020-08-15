@@ -25,11 +25,11 @@ def beautifulsoup_scrape(url):
     ext_skip = any(skip_ext in urlparse_path for skip_ext in skip_ext)
     if domain_skip is not True and ext_skip is not True:
         try:
-            time.sleep(0.2)
             hdr = {'User-Agent': "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 Safari/537.36"}
             req = Request(url,headers=hdr)
             page = urlopen(req, timeout = 5)
             html = page.read()
+            time.sleep(0.2)
             soup = BeautifulSoup(html.decode('utf-8', 'ignore'), "html.parser")
             link_list = []
             title_text = str(soup.title.text)

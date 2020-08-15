@@ -62,7 +62,6 @@ def main():
                 skipped_url_list = []
                 successful_crawl_count = url_count = bs_error_count = mail_count = skipped_url_count = 0
                 try:
-
                     for i in UrlList:
                         url = i[1]
                         url_count += 1
@@ -201,18 +200,7 @@ def main():
                 except Exception as error:
                     print(red(f'Error occured during iteration throught the list of URLS'))
                     print(yellow("Error details: ") + red(error))
-
-                   ######################################################
-                   # EXCEPTION NOT WORKING CORRECTLY
-                   #collection_name = "fails"
-                   #db_cm = mng_db[collection_name]
-                   #try:
-                   #    bs4_fails_collection = db_cm.insert_one(bs4_results_dict)
-                   #    print(yellow(f'Imported collection to {red(collection_name)} ') + yellow(f'with _id {red(_id)}'))
-                   #except Exception as error:
-                   #    print(yellow(f'MongoDB secondary import to {red(collection_name)} ') + (yellow("failed")))
-                   #pass
-                   ######################################################
+                    error_flag = True
         else:
             print(yellow(dt_print()) + red("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
             print(red("ERROR --- Query result atypical."))
