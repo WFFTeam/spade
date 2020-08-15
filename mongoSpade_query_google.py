@@ -1,317 +1,13 @@
 #mongoSpade_query_google.py
 
 import argparse
-import urllib
-import pymongo
 import re
-import json
-import unidecode
-import textwrap
 import time
-import os
-import sys
 import hashlib
 import typing
-from googlesearch import search
-from urllib.error import HTTPError
-from termcolor import colored
-from datetime import datetime as dt
-import warnings
-warnings.filterwarnings("ignore", category=DeprecationWarning)
+import textwrap
 
 from components import *
-from components.config_db import *
-
-# TERMCOLOR FUNCTIONS
-def yellow(text):
-    return colored(text, 'yellow', attrs=['bold'])
-def green(text):
-    return colored(text, 'green', attrs=['bold'])
-def red(text):
-    return colored(text, 'red', attrs=['bold'])
-def cyan(text):
-    return colored(text, 'cyan', attrs=['bold'])
-
-# SCREEN CLEAN FUNCTION
-def clear():
-    os.system( 'clear')
-
-# CURRENT DATE&TIME FUNCTION
-def dt_print():
-    now = dt.now()
-    dt_string = now.strftime("%H:%M:%S %d/%m/%Y")
-    return dt_string
-
-
-# Nova funkcija za odbrojavanje posto stopwatch() baguje
-def countdown(t):
-    while t > 0:
-        sys.stdout.write(red('\rWaiting for : {}s'.format(t)))
-        t -= 1
-        sys.stdout.flush()
-        time.sleep(1)
-    clear()
-
-def stopwatch(sec):
-    while sec:
-        minn, secc = divmod(sec, 60)
-        timeformat = '{:02d}:{:02d}'.format(minn, secc)
-        print(timeformat, end='')
-        time.sleep(1)
-        sec -= 1
-    print("Continuing!")
-
-def json_timestamp():
-    now = dt.now()
-    json_timestamp = now.isoformat()
-    return json_timestamp
-
-def mongodb_query_search(load_num_queries):
-    collection_name = "queries"
-    dbuser = urllib.parse.quote_plus(db_u)
-    dbpass = urllib.parse.quote_plus(db_p)
-    
-    mng_client = pymongo.MongoClient('mongodb://%s:%s@%s:%s/%s' % (dbuser, dbpass, dbhost, dbport, user_db))
-    mng_db = mng_client[database_name]
-    db_cm = mng_db[collection_name]
-    last_sequence = 0
-    list_queries = []
-
-    try:
-        load_queries = db_cm.find().sort('qnum', 1).limit(int(load_num_queries))
-        for item in load_queries:
-            last_sequence = item
-            list_queries.append(last_sequence)
-        return list_queries
-
-    except Exception as error:
-        print(red("ERROR --- Export of queries from DB interrupted"))
-        print(yellow("Error code: ") + red(error))
-        query_search_error = "!!!ERROR!!!"
-        return query_search_error
-
-def mongodb_completed_query_copy(fetched_query):
-    collection_name = "temp"
-    dbuser = urllib.parse.quote_plus(db_u)
-    dbpass = urllib.parse.quote_plus(db_p)
-    
-    mng_client = pymongo.MongoClient('mongodb://%s:%s@%s:%s/%s' % (dbuser, dbpass, dbhost, dbport, user_db))
-    mng_db = mng_client[database_name]
-    db_cm = mng_db[collection_name]
-    try:
-        backup_query = db_cm.insert_one(fetched_query)
-        print(green("Copied ") + cyan(fetched_query["_id"]) + green(" query to backup collection ") + cyan(collection_name))
-    except Exception as error:
-        print(red("ERROR --- Export of fetched queries interrupted"))
-        print(yellow("Error code: ") + red(error))
-        print(" ")
-
-def mongodb_query_delete(query_delete):
-    collection_name = "queries"
-    dbuser = urllib.parse.quote_plus(db_u)
-    dbpass = urllib.parse.quote_plus(db_p)
-    mng_client = pymongo.MongoClient('mongodb://%s:%s@%s:%s/%s' % (dbuser, dbpass, dbhost, dbport, user_db))
-    mng_db = mng_client[database_name]
-    db_cm = mng_db[collection_name]
-    try:
-        deleted_query = db_cm.delete_one(query_delete)
-        deleted_query_num = str(query_delete).strip("{}").split(':')[1]
-        print(green("Removed ") + cyan("query No." + deleted_query_num) + green(f' from collection {yellow(collection_name)}'))
-    except Exception as error:
-        print(red("ERROR --- Removal of finished queries failed"))
-        print(yellow("Error code: ") + red(error))
-
-def QueryProgress(currentLine, numOfLines, queryInput):
-    print(" ")
-    print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
-    print(green(dt_print()))
-    print(green(f"Fetching results for string: {googler_query}"))
-
-def googler_search(googler_query, stop_after):
-    i = 0
-    progBarMult = i
-    emptyBarMult = 70
-    progSign = 1
-    googler_search_result_list = []
-    googler_query_sanitized = unidecode.unidecode(re.sub(r'\.+', "_", re.sub('[\W_]', '.', googler_query)))
-    googler_query_short = ' '.join(googler_query_sanitized.split("_")[:12])
-
-    try:
-        for url in search(googler_query + ' -filetype:pdf ',   # The query you want to run
-#                   tld = 'com',  # The top level domain
-#                   lang = 'en',  # The language
-#                   start = 0,    # First result to retrieve
-                    stop = stop_after,    # Last result to retrieve
-                    num = 10,     # Number of results per page
-                    pause = 4.0,  # Lapse between HTTP requests
-                    ):
-            time.sleep(0.3)
-            i += 1
-            googler_search_result = [ i, url ]
-            googler_search_result_list.append(googler_search_result)
-            clear()
-            print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
-
-            if len(googler_query_short) >= 122:
-                googler_query_short = ' '.join(googler_query_sanitized.split("_")[:12]) + "..."
-            print(green("Searching Google and extracting results url for string ") + cyan(googler_query_short))
-            print(green(f'No. {i} --- {yellow(googler_search_result[1])}'))
-            if progBarMult == 100:
-                progSign = -1
-            if progBarMult == 0:
-                progSign = 1
-            progBarMult = progBarMult + 2 * progSign
-            emptyBarMult = emptyBarMult - progSign
-            emptyBar = " " * emptyBarMult
-            print(' ')
-            print(cyan(emptyBar + '<=' + "=" * progBarMult + '=>'))
-            print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
-        
-        return googler_search_result_list
-    except IndexError as e:
-        print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
-        print(red('Index error occured: ' + str(e.code)))
-    except HTTPError as err:
-        print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
-        print(yellow("Error occured for string: ") + cyan(googler_query_short))
-        print(red(err))
-        if err.code == 429:
-            print(red('Too many requests; temporarily blocked by Google'))
-            print(yellow("Sleeping for 1200 secs"))
-            countdown(1200)
-            print(green("Retrying..."))
-            googler_search(googler_query, stop_after)
-    except Exception as error:
-        print(red(f'ERROR --- Searching interrupted by exception'))
-        print(yellow("Error code: ") + red(error))
-
-def mongodb_google_results_import(fetched_query):
-    collection_name = "google"
-    dbuser = urllib.parse.quote_plus(db_u)
-    dbpass = urllib.parse.quote_plus(db_p)
-    
-    mng_client = pymongo.MongoClient('mongodb://%s:%s@%s:%s/%s' % (dbuser, dbpass, dbhost, dbport, user_db))
-    mng_db = mng_client[database_name]
-    db_cm = mng_db[collection_name]
-
-    try:
-        google_results_collection = db_cm.insert_one(fetched_query)
-        print(green(f'Results for {cyan(fetched_query["_id"])} ') + green(f'imported to collection {yellow(collection_name)}'))
-        print(" ")
-
-    except Exception as error:
-        print(red(f'MongoDB import of URL list failed'))
-        print(yellow("Error code: ") + red(error))
-
-def mongodb_bs4_results_import(bs4_results_dict, error_flag):
-    if error_flag is True:
-        collection_name = "fails"
-    elif error_flag == 'Skipped':
-        collection_name = "skipped"
-    else:
-        collection_name = "beautifulsoup"
-        
-    dbuser = urllib.parse.quote_plus(db_u)
-    dbpass = urllib.parse.quote_plus(db_p)
-    
-    mng_client = pymongo.MongoClient('mongodb://%s:%s@%s:%s/%s' % (dbuser, dbpass, dbhost, dbport, user_db))
-    mng_db = mng_client[database_name]
-    db_cm = mng_db[collection_name]
-    page_title = re.sub(r'[\n\r\t]*', '', bs4_results_dict["Title"])
-    email_count = bs4_results_dict["Mailnum"]
-    link_counter = bs4_results_dict["Linknum"]
-    _id = bs4_results_dict["_id"]
-    try:
-        bs4_results_collection = db_cm.insert_one(bs4_results_dict)
-        print(green(f'Page title: {cyan(page_title[:123])} '))
-
-        if email_count != 0:
-            print(green(f'Found {cyan(email_count)} ') + green(f'e-mail addresses '))
-        else:
-            print(green(f'Found {red(email_count)} ') + green(f'e-mail addresses '))
-        if link_counter != 0:
-            print(green(f'Found {cyan(link_counter)} ') + green('links '))
-        else:
-            print(green(f'Found {red(link_counter)} ') + green('links '))
-
-        if db_cm.count_documents({ '_id': _id }, limit = 1) != 0:
-            print(green(f'Successfully imported to collection {cyan(collection_name)} ') + green(f'with _id {cyan(_id)}'))
-        else:
-            print(red(f'Cant seem to find the imported document in the collection {cyan(collection_name)}' + red(f'with _id {cyan(_id)}')))
-
-    except Exception as error:
-        print(red(f'MongoDB import of beautiful_soup_scrape failed'))
-        print(yellow("Error details: ") + red(error))
-        collection_name = "fails"
-        db_cm = mng_db[collection_name]
-        try:
-            bs4_fails_collection = db_cm.insert_one(bs4_results_dict)
-            print(yellow(f'Imported collection to {red(collection_name)} ') + yellow(f'with _id {red(_id)}'))
-        except Exception as error:
-            print(yellow(f'MongoDB secondary import to {red(collection_name)} ') + (yellow("failed")))
-            pass
-
-def mongodb_bs4_link_result_append(_id, bs_link_result_dict):
-    dbuser = urllib.parse.quote_plus(db_u)
-    dbpass = urllib.parse.quote_plus(db_p)
-    collection_name = "beautifulsoup"
-    mng_client = pymongo.MongoClient('mongodb://%s:%s@%s:%s/%s' % (dbuser, dbpass, dbhost, dbport, user_db))
-    mng_db = mng_client[database_name]
-    db_cm = mng_db[collection_name]
-
-    link_id = bs_link_result_dict["link_id"]
-    link_query = (link_id + ".link_id")
-    json_time = json_timestamp()
-    link_num = bs_link_result_dict["Num"]
-    url_addr = bs_link_result_dict["URL"]
-    title_text = bs_link_result_dict["Title"]
-    page_title = re.sub(r'[\n\r\t]*', '', title_text)
-    email_count = bs_link_result_dict["Mailnum"]
-    found_mail = bs_link_result_dict["Email"]
-    link_counter = bs_link_result_dict["Linknum"]
-    link_list = bs_link_result_dict["Links"]
-    link_host = bs_link_result_dict["Host"]
-
-  
-    try:
-        bs4_link_append = db_cm.update_one(filter={'_id':_id}, update={'$set':{ link_id :{'link_id': link_id, 'Timestamp': json_time, 'Num': link_num, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'Links': link_list, 'Host': link_host}}}, upsert=True)
-        print(green(f'      Link title: {cyan(page_title[:123])} '))
-        if email_count != 0:
-            print(green(f'      Found {cyan(email_count)} ') + green(f'e-mail addresses '))
-        else:
-            print(green(f'      Found {red(email_count)} ') + green(f'e-mail addresses '))
-        if link_counter != 0:
-            print(green(f'      Found {cyan(link_counter)} ') + green('links '))
-        else:
-            print(green(f'      Found {red(link_counter)} ') + green('links '))
-
-        if db_cm.count_documents({ link_query: link_id }, limit = 1) != 0:
-            print(green(f'      Successfully appended link {cyan(link_id)} {green("scrape results to original document ")}') + green(f'with _id {cyan(_id)}'))
-        else:
-            print(red(f'        Cant find the imported result {link_id} in the collection {cyan(collection_name)}' + red(f' under the parent _id {cyan(_id)}')))
-    except Exception as error:
-        print(red(f'        Import of link crawl results {cyan(link_id)} under the parent _id {cyan(_id)} {red("failed")}'))
-        print(yellow("      Error details: ") + red(error))
-        pass
-
-def mongodb_bs4_link_search(link_id):
-    dbuser = urllib.parse.quote_plus(db_u)
-    dbpass = urllib.parse.quote_plus(db_p)
-    collection_name = "beautifulsoup"
-    mng_client = pymongo.MongoClient('mongodb://%s:%s@%s:%s/%s' % (dbuser, dbpass, dbhost, dbport, user_db))
-    mng_db = mng_client[database_name]
-    db_cm = mng_db[collection_name]
-    json_time = json_timestamp()
-    link_query = (link_id + ".link_id")
-    try:
-        if db_cm.count_documents({ link_query: link_id }, limit = 1) != 0:
-            return True
-        else:
-            return False
-    except Exception as error:
-        print(red(f'MongoDB query of link_id {cyan(link_id)} {red(" failed.")}'))
-        print(yellow("Error details: ") + red(error))
-        pass
 
 def main():
     parser = argparse.ArgumentParser()
@@ -441,7 +137,7 @@ def main():
                                                 skipped_link_count += 1
                                                 link_url_addr = link_url
 
-                                                print(green(f'      Crawling link {yellow(link_num)}') + green(f' of {yellow(link_counter)}'))
+                                                print(green(f'      Crawling link {yellow(str(link_num))}') + green(f' of {yellow(str(link_counter))}'))
                                                 print(green(f'      Link URL: {yellow(link_url_addr[:132])}'))
                                                 print("      " + cyan(link_id) + yellow(' link skipped'))
                                                 print(' ')
@@ -462,7 +158,7 @@ def main():
 
                                                 bs_link_result_dict = ({'link_id': link_id, 'Timestamp': json_time, 'Num': link_num, 'URL': link_url_addr, 'Title': link_title_text, 'Mailnum': link_email_count, 'Email': link_found_mail, 'Linknum': link_link_counter, 'Links': link_link_list, 'Host': link_urlparse_host})
 
-                                                print(green(f'      Crawling link {yellow(link_num)}') + green(f' of {yellow(link_counter)}'))
+                                                print(green(f'      Crawling link {yellow(str(link_num))}') + green(f' of {yellow(str(link_counter))}'))
                                                 print(green(f'      Link URL: {yellow(link_url_addr[:132])}'))
                                                 mongodb_bs4_link_result_append(_id, bs_link_result_dict)
                                                 print(' ')
@@ -470,13 +166,14 @@ def main():
                                                 error_flag = True
                                                 link_url_addr = link_url
                                                 error = bs_link_result[1]
-                                                print(green(f'      Crawling link {yellow(link_num)}') + green(f' of {yellow(link_counter)}'))
+                                                print(green(f'      Crawling link {yellow(link_num)}') + green(f' of {yellow(str(link_counter))}'))
                                                 print(green(f'      Link URL: {yellow(link_url_addr[:132])}'))
                                                 print("      " + cyan(link_id) + red(' link scraping failed'))
                                                 print(yellow("      Error details: ") + red(error))
                                                 print(' ')
                                         else:
-                                            print(green(f'      Crawling link {yellow(link_num)}') + green(f' of {yellow(link_counter)}'))
+                                            link_url_addr = link_url
+                                            print(green(f'      Crawling link {yellow(str(link_num))}') + green(f' of {yellow(str(link_counter))}'))
                                             print(green(f'      Link URL: {yellow(link_url_addr[:132])}'))
                                             print("      " + cyan(link_id) + red(' link ID already crawled'))
                                             print(' ')
@@ -492,7 +189,7 @@ def main():
                             error = bs_result[1]
                             bs_error_count += 1
                             url_addr = url
-                            print(yellow(dt_print()) + red("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+                            print(red(dt_print()) + red("  ||  URL ") + yellow(str(url_count) + " of " + str(num_url)) + red(" ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
                             print(yellow(f'Scrape of {red(url_addr[:132])} ') + (yellow("failed")))
                             print(yellow("Error: beautifulsoup_scrape function encountered an error."))
                             print(yellow("Error details: ") + red(error))

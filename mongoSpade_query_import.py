@@ -11,33 +11,8 @@ from datetime import datetime as dt
 import warnings # pymongo warning ingore
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from components import *
+from components.mongoSpade_stdout import *
 from components.config_db import *
-
-# TERMCOLOR FUNCTIONS
-def yellow(text):
-    return colored(text, 'yellow', attrs=['bold'])
-def green(text):
-    return colored(text, 'green', attrs=['bold'])
-def red(text):
-    return colored(text, 'red', attrs=['bold'])
-def cyan(text):
-    return colored(text, 'cyan', attrs=['bold'])
-
-# SCREEN CLEAN FUNCTION
-def clear():
-    os.system( 'clear')
-
-# CURRENT DATE&TIME FUNCTION
-def dt_print():
-    now = dt.now()
-    dt_string = now.strftime("%H:%M:%S %d/%m/%Y")
-    return dt_string
-
-def json_timestamp():
-    now = dt.now()
-    json_timestamp = now.isoformat()
-    return json_timestamp           
                
 def mongodb_query_input(query_dict):
     collection_name = "queries"
