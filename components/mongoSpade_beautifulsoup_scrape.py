@@ -4,9 +4,9 @@ import argparse
 from termcolor import colored
 from datetime import datetime as dt
 import re
+import time
 from bs4 import BeautifulSoup
 from urllib.error import HTTPError
-#from urllib.parse import urlsplit
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
@@ -46,6 +46,7 @@ def beautifulsoup_scrape(url):
    #print(cyan(url_in_skiphosts))
     if url_in_skiphosts is not True:
         try:
+            time.sleep(0.2)
             hdr = {'User-Agent': "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 Safari/537.36"}
             req = Request(url,headers=hdr)
             page = urlopen(req, timeout = 5)
