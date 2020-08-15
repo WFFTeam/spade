@@ -142,7 +142,7 @@ def googler_search(googler_query, stop_after):
     #                   tld = 'com',  # The top level domain
     #                   lang = 'en',  # The language
     #                   start = 0,    # First result to retrieve
-    #                   stop = 10,    # Last result to retrieve
+                        stop = 10,    # Last result to retrieve
                         num = 10,     # Number of results per page
                         pause = 4.0,  # Lapse between HTTP requests
                         ):
@@ -265,35 +265,62 @@ def mongodb_bs4_results_import(bs4_results_dict, error_flag):
             print(yellow(f'MongoDB secondary import to {red(collection_name)} ') + (yellow("failed")))
             pass
 
-#######################################################
 ###WIP Link scrape results import
-# def mongodb_bs4_links_append(_id, bs_link_result_dict):
-#     dbuser = urllib.parse.quote_plus(db_u)
-#     dbpass = urllib.parse.quote_plus(db_p)
-#   
-#     mng_client = pymongo.MongoClient('mongodb://%s:%s@%s:%s/%s' % (dbuser, dbpass, dbhost, dbport, user_db))
-#     mng_db = mng_client[database_name]
-#     db_cm = mng_db[collection_name]
-#     page_title = re.sub(r'[\n\r\t]*', '', bs_link_result_dict["Title"])
-#     email_count = bs_link_result_dict["Mailnum"]
-#     link_counter = bs_link_result_dict["Linknum"]
-#     link_id = bs_link_result_dict["link_id"]
-#     try:
-#         bs4_link_collection = db_cm.insert_one(_id, bs_link_result_dict)
-#         print(green(f'Link title: {cyan(page_title[:123])} '))
-#         if email_count != 0:
-#             print(green(f'Found {cyan(email_count)} ') + green(f'e-mail addresses '))
-#         else:
-#             print(green(f'Found {red(email_count)} ') + green(f'e-mail addresses '))
-#         if link_counter != 0:
-#             print(green(f'Found {cyan(link_counter)} ') + green('links '))
-#         else:
-#             print(green(f'Found {red(link_counter)} ') + green('links '))
-#         if db_cm.count_documents({ 'link_id': link_id,  }, limit = 1) != 0:
-#             print(green(f'Successfully appended link scrape results to original document ') + green(f'with _id {cyan(_id)}'))
-#         else:
-#             print(red(f'Cant seem to find the imported document in the collection {cyan(collection_name)}' + red(f'with _id {cyan(_id)}')))
-#######################################################
+def mongodb_bs4_link_result_append(_id, bs_link_result_dict):
+    dbuser = urllib.parse.quote_plus(db_u)
+    dbpass = urllib.parse.quote_plus(db_p)
+    collection_name = "beautifulsoup"
+    mng_client = pymongo.MongoClient('mongodb://%s:%s@%s:%s/%s' % (dbuser, dbpass, dbhost, dbport, user_db))
+    mng_db = mng_client[database_name]
+    db_cm = mng_db[collection_name]
+
+    link_id = bs_link_result_dict["link_id"]
+    json_time = json_timestamp()
+    link_num = bs_link_result_dict["Num"]
+    url_addr = bs_link_result_dict["URL"]
+    title_text = bs_link_result_dict["Title"]
+    page_title = re.sub(r'[\n\r\t]*', '', title_text)
+    email_count = bs_link_result_dict["Mailnum"]
+    found_mail = bs_link_result_dict["Email"]
+    link_counter = bs_link_result_dict["Linknum"]
+    link_list = bs_link_result_dict["Links"]
+    link_host = bs_link_result_dict["Host"]
+   #link_seqnum = ("Link" + str(link_num))
+
+  
+    try:
+        ###SERDITI POLJA I STRUKTURU I SREDITI PRINT ISKAZ ISPOD
+        bs4_link_append = db_cm.update_one(filter={'_id':_id}, update={'$set':{ link_id :{'link_id': link_id, 'Timestamp': json_time, 'Num': link_num, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'Links': link_list, 'Host': link_host}}}, upsert=True)
+    
+       #print(cyan("link_url is " + link_url))         ###DEBUG                                        
+       #print(cyan("_id is " + _id))                   ###DEBUG
+       #print(cyan("link_id is " + link_id))           ###DEBUG
+       #bs4_link_collection = db_cm.find({"_id": _id}) ###DEBUG
+       #for i in bs4_link_collection:                  ###DEBUG
+       #    print(i)                                   ###DEBUG 
+
+
+        print(green(f'Link title: {cyan(page_title[:123])} '))
+        if email_count != 0:
+            print(green(f'Found {cyan(email_count)} ') + green(f'e-mail addresses '))
+        else:
+            print(green(f'Found {red(email_count)} ') + green(f'e-mail addresses '))
+        if link_counter != 0:
+            print(green(f'Found {cyan(link_counter)} ') + green('links '))
+        else:
+            print(green(f'Found {red(link_counter)} ') + green('links '))
+
+        link_query = (link_id + ".link_id")
+       #print("Link query is: " + red(link_query)) ###DEBUG
+        if db_cm.count_documents({ link_query: link_id }, limit = 1) != 0:
+            print(green(f'Successfully appended link scrape results to original document ') + green(f'with _id {cyan(_id)}'))
+        else:
+            print(red(f'Cant find the imported result {link_id} in the collection {cyan(collection_name)}' + red(f' under the parent _id {cyan(_id)}')))
+    except Exception as error:
+        print(red(f'Import of link crawl results {cyan(link_id)} under the parent _id {cyan(_id)} {red("failed")}'))
+        print(yellow("Error details: ") + red(error))
+        pass
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -324,7 +351,6 @@ def main():
         print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
 
     for query in queries:
-
         if query != "!!!ERROR!!!":
             _id = query["_id"]
             seq_num = query["qnum"]
@@ -391,43 +417,54 @@ def main():
                             url_addr = url
                             crawled_url_list.append(url_addr)
                             bs4_results = ([successful_crawl_count, json_time, url_addr, title_text, found_mail, link_list])
-                            bs4_results_dict = ({'_id':_id, 'Timestamp': json_time, 'Num': successful_crawl_count, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'Links': link_list})
+                            bs4_results_dict = ({'_id':_id, 'Timestamp': json_time, 'Num': successful_crawl_count, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'Links': link_list, 'Host': urlparse_host})
                             
                             print(yellow(dt_print()) + green("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
                             print(green(f'Crawling URL {yellow(url_addr[:132])} '))
                             mongodb_bs4_results_import(bs4_results_dict, error_flag)
                             print(' ')
 
-                            #######################################################
-                            ### FOUND LINK CRAWL --- WIP
-                            # link_num = 0
-                            # if isinstance(link_list, list):
-                            #     for url in link_list:
-                            #         link_url = url
-                            #         link_id = hashlib.md5(link_url.encode('utf-8')).hexdigest()
-                            #         json_time = json_timestamp()
-                            #         bs_link_result = beautifulsoup_scrape(link_url)
-                            #         link_num += 1
-                            #         if bs_link_result[2] != "!!!ERROR!!!":
-                            #             title_text = bs_link_result[0]
-                            #             found_mail = bs_link_result[1]
-                            #             link_list = bs_link_result[2]
-                            #             urlparse_host = bs_link_result[3]
-                            #             email_count = 0 + len(found_mail)
-                            #             if email_count == 0:
-                            #                 found_mail = 'None'
-                            #             link_counter = 0 + len(link_list)
-                            #             if link_counter == 0:
-                            #                 link_list = 'None'
-                            #             url_addr = link_url
-                            #             crawled_link_list.append(url_addr)
-                            #             bs_link_result_dict = ({'link_id': link_id, 'Timestamp': json_time, 'Num': link_num, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'Links': link_list})
-                            #             print(yellow(dt_print()) + green("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
-                            #             print(green(f'Crawling link {yellow(url_addr[:132])} '))
-                            #             mongodb_bs4_links_append(_id, bs_link_result_dict)
-                            #             print(' ')
-                            #
-                            ######################################################
+                            link_num = 0
+                            crawled_link_list = []
+                           #DEBUG
+                           #print(yellow(dt_print()) + red("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+                           #print(cyan(isinstance(link_list, list))) ###DEBUG
+                           #print(yellow(dt_print()) + red("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+                            if isinstance(link_list, list):
+                                for url in link_list:
+                            #SREDITI DA LISTA NEMA PONAVLJANJA
+                                    try:
+                                        link_url = url
+                                        link_id = hashlib.md5(link_url.encode('utf-8')).hexdigest()
+                                        json_time = json_timestamp()
+                                        bs_link_result = beautifulsoup_scrape(link_url)
+                                        link_num += 1
+                                        if bs_link_result[2] != "!!!ERROR!!!":
+                                            link_title_text = bs_link_result[0]
+                                            link_found_mail = bs_link_result[1]
+                                            link_link_list = bs_link_result[2]
+                                            link_urlparse_host = bs_link_result[3]
+                                            link_email_count = 0 + len(link_found_mail)
+                                            if link_email_count == 0:
+                                                link_found_mail = 'None'
+                                            link_link_counter = 0 + len(link_link_list)
+                                            if link_link_counter == 0:
+                                                link_link_list = 'None'
+                                            link_url_addr = link_url
+                                            crawled_link_list.append(link_url_addr)
+                                            ##LOGIKA ZA DODAVANJE
+                                            bs_link_result_dict = ({'link_id': link_id, 'Timestamp': json_time, 'Num': link_num, 'URL': link_url_addr, 'Title': link_title_text, 'Mailnum': link_email_count, 'Email': link_found_mail, 'Linknum': link_link_counter, 'Links': link_link_list, 'Host': link_urlparse_host})
+                                            print(yellow(dt_print()) + green("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+                                            print(green(f'Crawling link {yellow(link_num)}') + green(f' of {yellow(link_counter)}'))
+                                            print(green(f'Link URL: {yellow(link_url_addr[:132])}'))
+                                            mongodb_bs4_link_result_append(_id, bs_link_result_dict)
+                                            print(' ')
+                                    except Exception as error:
+                                        print(yellow(dt_print()) + red("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+                                        print(yellow(f'Scrape of link {red(link_url[:132])} ') + (yellow("failed")))
+                                        print(red(f'Error: {error}'))
+                                        print(yellow(f'On to the next one'))
+                                        pass
                         else:
                             error_flag = True
                             url_addr = url
@@ -446,9 +483,10 @@ def main():
                 except Exception as error:
                     print(red(f'Error occured during iteration throught the list of URLS'))
                     print(yellow("Error details: ") + red(error))
-                    collection_name = "fails"
+
                    ######################################################
                    # EXCEPTION NOT WORKING CORRECTLY
+                   #collection_name = "fails"
                    #db_cm = mng_db[collection_name]
                    #try:
                    #    bs4_fails_collection = db_cm.insert_one(bs4_results_dict)
@@ -462,9 +500,9 @@ def main():
             print(red("ERROR --- Query result atypical."))
             print(yellow("Error code: ") + red(query))
 
-        total_urls = skipped_url_count + successful_crawl_count + bs_error_count
+        total_urls = int(skipped_url_count) + int(successful_crawl_count) + int(bs_error_count)
         print(cyan(dt_print()) + yellow("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
-        print(cyan("From " + total_urls + " URLs, ") + (red(bs_error_count)) + red(" failed, ") + yellow(skipped_url_count) + yellow(" skipped and ") + green(successful_crawl_count) + green(" successfully crawled."))
+        print(cyan("From " + str(total_urls) + " URLs, ") + (red(str(bs_error_count))) + red(" failed, ") + yellow(str(skipped_url_count)) + yellow(" skipped and ") + green(str(successful_crawl_count)) + green(" successfully crawled."))
 
         countdown(wait_time)
 
