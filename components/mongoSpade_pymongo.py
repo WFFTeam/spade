@@ -7,11 +7,10 @@ import time
 import os
 import typing
 import textwrap
+import traceback
 from urllib.parse import urlparse
-
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
-
 from components.mongoSpade_stdout import *
 from components.config_db import *
 
@@ -36,6 +35,7 @@ def mongodb_query_search(load_num_queries):
     except Exception as error:
         print(red("ERROR --- Export of queries from DB interrupted"))
         print(yellow("Error code: ") + red(error))
+        traceback.print_exception(type(err), err, err.__traceback__)
         query_search_error = "!!!ERROR!!!"
         return query_search_error
 
@@ -53,6 +53,7 @@ def mongodb_completed_query_copy(fetched_query):
     except Exception as error:
         print(red("ERROR --- Export of fetched queries interrupted"))
         print(yellow("Error code: ") + red(error))
+        traceback.print_exception(type(err), err, err.__traceback__)
         print(" ")
 
 def mongodb_query_delete(query_delete):
@@ -69,6 +70,8 @@ def mongodb_query_delete(query_delete):
     except Exception as error:
         print(red("ERROR --- Removal of finished queries failed"))
         print(yellow("Error code: ") + red(error))
+        traceback.print_exception(type(err), err, err.__traceback__)
+        print(" ")
 
 def mongodb_google_results_import(fetched_query):
     collection_name = "google"
@@ -79,14 +82,25 @@ def mongodb_google_results_import(fetched_query):
     mng_db = mng_client[database_name]
     db_cm = mng_db[collection_name]
 
+   #print(fetched_query) ###DEBUG
+
     try:
         google_results_collection = db_cm.insert_one(fetched_query)
         print(green(f'Results for {cyan(fetched_query["_id"])} ') + green(f'imported to collection {yellow(collection_name)}'))
         print(" ")
 
-    except Exception as error:
+    except pymongo.errors.DuplicateKeyError as err:
+        print(yellow(f'_id {red(fetched_query["_id"])}') + yellow(" already exists"))
+        print(red('Skipping'))
+       #traceback.print_exception(type(err), err, err.__traceback__)
+        print(" ")
+        return False
+
+    except Exception as err:
         print(red(f'MongoDB import of URL list failed'))
-        print(yellow("Error code: ") + red(error))
+        print(yellow("Error code: ") + red(err))
+        traceback.print_exception(type(err), err, err.__traceback__)
+        print(" ")
 
 def mongodb_bs4_results_import(bs4_results_dict, error_flag):
     if error_flag is True:
@@ -121,19 +135,21 @@ def mongodb_bs4_results_import(bs4_results_dict, error_flag):
 
         if db_cm.count_documents({ '_id': _id }, limit = 1) != 0:
             print(green(f'Successfully imported to collection {cyan(collection_name)} ') + green(f'with _id {cyan(_id)}'))
-            return True
         else:
             print(red(f'Cant seem to find the imported document in the collection {cyan(collection_name)}' + red(f'with _id {cyan(_id)}')))
 
-    except DuplicateKeyError:
-        print(yellow(f'Entry with {red("_id " + _id) + ("already exits")}'))
+    except pymongo.errors.DuplicateKeyError as err:
+        print(yellow(f'_id {red(_id)}') + yellow(" already exists"))
         print(red('Skipping'))
-        pass
+        traceback.print_exception(type(err), err, err.__traceback__)
+        print(" ")
+        return False
 
     except Exception as e:
         print(red(f'MongoDB import of beautiful_soup_scrape failed'))
         print(yellow("Error details: ") + red(e))
         print(yellow("Error code: ") + red(e.code))
+        traceback.print_exception(type(err), err, err.__traceback__)
         collection_name = "fails"
         db_cm = mng_db[collection_name]
         try:
@@ -153,6 +169,7 @@ def mongodb_bs4_link_result_append(_id, bs_link_result_dict):
 
     link_id = bs_link_result_dict["link_id"]
     link_query = (link_id + ".link_id")
+    
     json_time = json_timestamp()
     link_num = bs_link_result_dict["Num"]
     url_addr = bs_link_result_dict["URL"]
@@ -162,11 +179,12 @@ def mongodb_bs4_link_result_append(_id, bs_link_result_dict):
     found_mail = bs_link_result_dict["Email"]
     link_counter = bs_link_result_dict["Linknum"]
     link_list = bs_link_result_dict["Links"]
+    link_list = list(set(link_list))
     link_host = bs_link_result_dict["Host"]
 
-  
     try:
-        bs4_link_append = db_cm.update_one(filter={'_id':_id}, update={'$set':{ link_id :{'link_id': link_id, 'Timestamp': json_time, 'Num': link_num, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'Links': link_list, 'Host': link_host}}}, upsert=True)
+        
+        bs4_link_append = db_cm.update_one(filter={'_id':_id}, update={'$addToSet':{ "processed": {'link_id': link_id, 'Timestamp': json_time, 'Num': link_num, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'Links': link_list, 'Host': link_host}}}, upsert=True)
         print(green(f'      Link title: {cyan(page_title[:123])} '))
         if email_count != 0:
             print(green(f'      Found {cyan(str(email_count))} ') + green('e-mail addresses '))
@@ -177,13 +195,15 @@ def mongodb_bs4_link_result_append(_id, bs_link_result_dict):
         else:
             print(green(f'      Found {red(str(link_counter))} ') + green('links '))
 
-        if db_cm.count_documents({ link_query: link_id }, limit = 1) != 0:
+        if db_cm.count_documents({"processed.link_id": link_id}, limit = 1) != 0:
             print(green("      Link ID ") + (cyan(link_id)) + (green(" appended to document ")) + (cyan(_id)))
         else:
             print(red(f'      Link ID: {link_id} in the collection {cyan(collection_name)}') + red(" not found"))
     except Exception as error:
         print(red(f'      Link ID {cyan(link_id)} {red("in document ")} {cyan(_id)} {red("failed")}'))
         print(yellow("      Error details: ") + red(error))
+        traceback.print_exception(type(err), err, err.__traceback__)
+        print(' ')
         pass
 
 def mongodb_bs4_link_search(link_id):
@@ -203,4 +223,24 @@ def mongodb_bs4_link_search(link_id):
     except Exception as error:
         print(red(f'MongoDB query of link_id {cyan(link_id)} {red(" failed.")}'))
         print(yellow("Error details: ") + red(error))
+        traceback.print_exception(type(err), err, err.__traceback__)
+        pass
+
+def mongodb_bs4_url_search(_id):
+    dbuser = urllib.parse.quote_plus(db_u)
+    dbpass = urllib.parse.quote_plus(db_p)
+    collection_name = "beautifulsoup"
+    mng_client = pymongo.MongoClient('mongodb://%s:%s@%s:%s/%s' % (dbuser, dbpass, dbhost, dbport, user_db))
+    mng_db = mng_client[database_name]
+    db_cm = mng_db[collection_name]
+    json_time = json_timestamp()
+    try:
+        if db_cm.count_documents({ "_id": _id }, limit = 1) != 0:
+            return True
+        else:
+            return False
+    except Exception as error:
+        print(red(f'MongoDB query of link_id {cyan(link_id)} {red(" failed.")}'))
+        print(yellow("Error details: ") + red(error))
+        traceback.print_exception(type(err), err, err.__traceback__)
         pass

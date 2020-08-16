@@ -18,5 +18,12 @@ skip_ext = [
 ".mp3",
 ".mp4",
 ".avi",
-".mkv"
+".mkv",
+".JPG",
+".JPEG",
+".PDF",
+".MP3",
+".MP4",
+".AVI",
+".MKV"
 ]
