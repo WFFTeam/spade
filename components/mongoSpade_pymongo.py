@@ -121,12 +121,19 @@ def mongodb_bs4_results_import(bs4_results_dict, error_flag):
 
         if db_cm.count_documents({ '_id': _id }, limit = 1) != 0:
             print(green(f'Successfully imported to collection {cyan(collection_name)} ') + green(f'with _id {cyan(_id)}'))
+            return True
         else:
             print(red(f'Cant seem to find the imported document in the collection {cyan(collection_name)}' + red(f'with _id {cyan(_id)}')))
 
-    except Exception as error:
+    except DuplicateKeyError:
+        print(yellow(f'Entry with {red("_id " + _id) + ("already exits")}'))
+        print(red('Skipping'))
+        pass
+
+    except Exception as e:
         print(red(f'MongoDB import of beautiful_soup_scrape failed'))
-        print(yellow("Error details: ") + red(error))
+        print(yellow("Error details: ") + red(e))
+        print(yellow("Error code: ") + red(e.code))
         collection_name = "fails"
         db_cm = mng_db[collection_name]
         try:
