@@ -99,7 +99,7 @@ def mongodb_google_results_import(fetched_query):
     except Exception as err:
         print(red(f'MongoDB import of URL list failed'))
         print(yellow("Error code: ") + red(err))
-        traceback.print_exception(type(err), err, err.__traceback__)
+       #traceback.print_exception(type(err), err, err.__traceback__)
         print(" ")
 
 def mongodb_bs4_results_import(bs4_results_dict, error_flag):

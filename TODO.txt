@@ -4,6 +4,7 @@
 # - mongoSpade_query_google.py 		- FIFO fetch search query and get url of results 		- DONE
 # - mongoSpade_beautifulsoup_scrape 	- Scrape url with beautifulsoup python package			- DONE
 ------------------------------------------------------------------------------------------------------------------
+  - !!! Local links aggregation		- Stavi jebene lokalne linkove na jednom pristupacnom mestu kako bi mogao brzo da predjes tu listu
   - mongoSpade_site_tree		- Explore site directory structure and upload results to db
   - mongoSpade_links_crawl		- Crawl local found links, use mongoSpade_site_tree for aiming
   - mongoSpade_html5_scrape 		- Scrape url with HTML5 python package
