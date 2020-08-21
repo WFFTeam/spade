@@ -141,7 +141,7 @@ def mongodb_bs4_results_import(bs4_results_dict, error_flag):
     except pymongo.errors.DuplicateKeyError as err:
         print(yellow(f'_id {red(_id)}') + yellow(" already exists"))
         print(red('Skipping'))
-        traceback.print_exception(type(err), err, err.__traceback__)
+       #traceback.print_exception(type(err), err, err.__traceback__)
         print(" ")
         return False
 

@@ -20,14 +20,10 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 from components.mongoSpade_stdout import *
 from components.config_db import *
 
-
-
-
-
-
-
 ###  Sve sto moze da se ubaci u centralni element ispod,
 ###  radi uproscavanja drugih funcija i daljih operacija
+
+
 def mongodb_core(arg1, arg2, arg3):
     dbuser = urllib.parse.quote_plus(db_u)
     dbpass = urllib.parse.quote_plus(db_p)
@@ -36,18 +32,29 @@ def mongodb_core(arg1, arg2, arg3):
     db_cm = mng_db[collection_name]
 
 
-
-
-###  Pronalazi navode i projektuje ih na odgovarajuci nacin,
+###  Pronalazi navode i projektuje(printuje) ih na odgovarajuci nacin,
 def mongodb_find(arg1, arg2, arg3):
-    search_query = args.query
-    collection_name = args.collection
-def mongodb_transform(arg1, arg2, arg3):
+    collection_name = arg1
+    find_query = arg2
 
-def mongodb_copy(arg1, arg2, arg3):
+    try:
+        mongodb_find_results = mongodb_core.db_cm[collection_name].find(find_query)
+        print(mongodb_find_results)
 
-def mongodb_delete(arg1, arg2, arg3):
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--find", "-f", help="--find [Formatted query to search in DB]")
+    args = parser.parse_args()
+    print(args) ###DEBUG
+    
+### TODO!!!
+#def mongodb_transform(arg1, arg2, arg3):
+
+#def mongodb_copy(arg1, arg2, arg3):
+
+#def mongodb_delete(arg1, arg2, arg3):
 
 
-def mongodb_export(arg1, arg2, arg3):
-def mongodb_import(arg1, arg2, arg3):
+#def mongodb_export(arg1, arg2, arg3):
+#def mongodb_import(arg1, arg2, arg3):
