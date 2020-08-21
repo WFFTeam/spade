@@ -58,70 +58,76 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--list", "-l", help="--list [path to list file to read search queries from, one query per line]")
     parser.add_argument("--query", "-q", help="--query [search string]")
+    parser.add_argument("--show", "-s", help="--show [search string]")
     args = parser.parse_args()
-    print(green("Importing query(es) to MongoDB"))
-    mongoDBstring = "mongodb://" + dbhost.replace("'", "") + ":" + str(dbport)
-    last_num = 0
-    last_num = int(mongodb_query_search())
-    no_of_successful_import = 0
-    print(cyan(last_num) + green(" queries pending for crawling"))
-    print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
-    if args.list:
-        query_file_path = args.list
-        file_lines = sum(1 for line in open(query_file_path, 'r'))
-        with open(query_file_path, 'r') as query_file:
-            queries = []
-            error_count = 0
+    if args.list or args.query:
+        print(green("Importing query(es) to MongoDB"))
+        mongoDBstring = "mongodb://" + dbhost.replace("'", "") + ":" + str(dbport)
+        last_num = 0
+        last_num = int(mongodb_query_search())
+        no_of_successful_import = 0
+        print(cyan(last_num) + green(" queries pending for crawling"))
+        print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+        if args.list:
+            query_file_path = args.list
+            file_lines = sum(1 for line in open(query_file_path, 'r'))
+            with open(query_file_path, 'r') as query_file:
+                queries = []
+                error_count = 0
+                if last_num != 0:
+                    seq_num = 0 + last_num
+                else:
+                    seq_num = 0
+                print(green("Following queries added to DB:"))
+                for line in query_file:
+                    query = (re.sub(r'[\n\r\t]*', '', line))
+                    queries.append(query)
+                for query in queries:
+                    seq_num += 1
+                    sanitized_query = unidecode.unidecode(re.sub(r'\.+', "_", re.sub('[\W_]', '.', query)))
+                    _id = '_'.join(sanitized_query.split("_")[:12])
+                    json_time = json_timestamp()
+                    query_dict = {'_id': _id, 'qnum': seq_num, 'Timestamp': json_time, 'Query': query }
+                    query_input = mongodb_query_input(query_dict)
+                    if query_input == "!!!ERROR!!!":
+                        seq_num -= 1
+                        error_count += 1
+                    else:
+                        no_of_successful_import += 1
+
+                collection_name = "queries"
+                print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+                print(green("DB host: ") + yellow(dbhost))
+                print(green("Database name: ") + yellow(database_name))
+                print(green("Collection name: ") + yellow(collection_name))
+                print(yellow(no_of_successful_import) + green(" queries added to MongoDB pending list."))
+                if error_count != 0:
+                    print(red(error_count) + red(" errors encountered during the import."))
+                else:
+                    print(green("No errors occured during the import of queries"))
+        elif args.query:
+            print(green("Following queries added to DB:"))
             if last_num != 0:
                 seq_num = 0 + last_num
             else:
                 seq_num = 0
-            print(green("Following queries added to DB:"))
-            for line in query_file:
-                query = (re.sub(r'[\n\r\t]*', '', line))
-                queries.append(query)
-            for query in queries:
-                seq_num += 1
-                sanitized_query = unidecode.unidecode(re.sub(r'\.+', "_", re.sub('[\W_]', '.', query)))
-                _id = '_'.join(sanitized_query.split("_")[:12])
-                json_time = json_timestamp()
-                query_dict = {'_id': _id, 'qnum': seq_num, 'Timestamp': json_time, 'Query': query }
-                query_input = mongodb_query_input(query_dict)
-                if query_input == "!!!ERROR!!!":
-                    seq_num -= 1
-                    error_count += 1
-                else:
-                    no_of_successful_import += 1
-
-            collection_name = "queries"
-            print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
-            print(green("DB host: ") + yellow(dbhost))
-            print(green("Database name: ") + yellow(database_name))
-            print(green("Collection name: ") + yellow(collection_name))
-            print(yellow(no_of_successful_import) + green(" queries added to MongoDB pending list."))
-            if error_count != 0:
-                print(red(error_count) + red(" errors encountered during the import."))
+                
+            line = args.query
+            query = (re.sub(r'[\n\r\t]*', '', line))
+            sanitized_query = unidecode.unidecode(re.sub(r'\.+', "_", re.sub('[\W_]', '.', query)))
+            _id = '_'.join(sanitized_query.split("_")[:12])
+            seq_num = last_num +1
+            json_time = json_timestamp()
+            query_dict = {'_id': _id, 'qnum': seq_num, 'Timestamp': json_time, 'Query': query }
+            query_input = mongodb_query_input(query_dict)
+            if query_input == "!!!ERROR!!!":
+                seq_num -= 1
             else:
-                print(green("No errors occured during the import of queries"))
-    elif args.query:
-        print(green("Following queries added to DB:"))
-        if last_num != 0:
-            seq_num = 0 + last_num
-        else:
-            seq_num = 0
-            
-        line = args.query
-        query = (re.sub(r'[\n\r\t]*', '', line))
-        sanitized_query = unidecode.unidecode(re.sub(r'\.+', "_", re.sub('[\W_]', '.', query)))
-        _id = '_'.join(sanitized_query.split("_")[:12])
-        seq_num = last_num +1
-        json_time = json_timestamp()
-        query_dict = {'_id': _id, 'qnum': seq_num, 'Timestamp': json_time, 'Query': query }
-        query_input = mongodb_query_input(query_dict)
-        if query_input == "!!!ERROR!!!":
-            seq_num -= 1
-        else:
-            no_of_successful_import += 1
+                no_of_successful_import += 1
+    elif args.show:
+        print(green("Searching in MongoDB"))
+        print(green("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
+        print(green("String: ") + yellow(args.show))
 
 if __name__ == "__main__":
     main()
