@@ -141,7 +141,7 @@ def mongodb_bs4_results_import(bs4_results_dict, error_flag):
     except pymongo.errors.DuplicateKeyError as err:
         print(yellow(f'_id {red(_id)}') + yellow(" already exists"))
         print(red('Skipping'))
-       #traceback.print_exception(type(err), err, err.__traceback__)
+        traceback.print_exception(type(err), err, err.__traceback__)
         print(" ")
         return False
 
@@ -241,6 +241,23 @@ def mongodb_bs4_url_search(_id):
             return False
     except Exception as error:
         print(red(f'MongoDB query of link_id {cyan(link_id)} {red(" failed.")}'))
+        print(yellow("Error details: ") + red(error))
+        traceback.print_exception(type(err), err, err.__traceback__)
+        pass
+
+def mongodb_bs4_link_mail_append(_id, link_found_mail_counter, link_found_mail_list)
+    dbuser = urllib.parse.quote_plus(db_u)
+    dbpass = urllib.parse.quote_plus(db_p)
+    collection_name = "beautifulsoup"
+    mng_client = pymongo.MongoClient('mongodb://%s:%s@%s:%s/%s' % (dbuser, dbpass, dbhost, dbport, user_db))
+    mng_db = mng_client[database_name]
+    db_cm = mng_db[collection_name]
+    try:
+        bs4_email_append = db_cm.update_one(filter={'_id':_id}, update={'$addToSet':{ 'Email': link_found_mail_list } })
+        bs4_email_count_update = db_cm.update_one(filter={'_id':_id}, update={'$inc':{ 'Mailnum': link_found_mail_counter } })
+        return True
+    except Exception as error:
+        print(red(f'MongoDB mail append of _id {cyan(_id)} {red(" failed.")}'))
         print(yellow("Error details: ") + red(error))
         traceback.print_exception(type(err), err, err.__traceback__)
         pass

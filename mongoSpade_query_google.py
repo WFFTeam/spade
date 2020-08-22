@@ -113,21 +113,21 @@ def main():
                                 title_text = bs_result[0]
                                 found_mail = bs_result[1]
                                 link_list = bs_result[2]
-                                local_link_list = [] ### TEST
-                                ext_link_list = [] ### TEST
+                                local_link_list = []
+                                ext_link_list = []
                                 urlparse_host = bs_result[3]
                                 url_domain = urlparse_host
-                              # print(cyan("###DEBUG### --- url_domain is : " + str(url_domain)))
+                              # print(cyan("###DEBUG### --- url_domain is : " + str(url_domain))) ###DEBUG
 
                                 if isinstance(link_list, list): ## TEST ## local_link_list, ext_link_list
                                     for url in link_list:   ## TEST
                                         link_url_check = url ## TEST
-                                      # print(cyan("###DEBUG### --- link_url_check is : " + str(link_url_check)))
+                                      # print(cyan("###DEBUG### --- link_url_check is : " + str(link_url_check))) ###DEBUG
                                         if url_domain in link_url_check:    ## TEST
-                                          # print(cyan("###DEBUG### --- Added to ") + red("local_link_list!!!"))
+                                          # print(cyan("###DEBUG### --- Added to ") + red("local_link_list!!!")) ###DEBUG
                                             local_link_list.append(link_url_check) ###Check if local link
                                         else:
-                                          # print(cyan("###DEBUG### --- Added to ") + red("ext_link_list!!!"))
+                                          # print(cyan("###DEBUG### --- Added to ") + red("ext_link_list!!!")) ###DEBUG
                                             ext_link_list.append(link_url_check)
                                 email_count = 0 + len(found_mail)
                                 if email_count == 0:
@@ -143,8 +143,8 @@ def main():
                                     link_list = 'None'
                                 url_addr = url
                                 crawled_url_list.append(url_addr)
-                              # print(cyan("###DEBUG### --- local_link_counter : ") + red(str(local_link_counter)))
-                              # print(cyan("###DEBUG### --- ext_link_counter : ") + red(str(ext_link_counter)))
+                              # print(cyan("###DEBUG### --- local_link_counter : ") + red(str(local_link_counter))) ###DEBUG
+                              # print(cyan("###DEBUG### --- ext_link_counter : ") + red(str(ext_link_counter))) ###DEBUG
                                 bs4_results = ([successful_crawl_count, json_time, url_addr, title_text, found_mail, local_link_list, ext_link_list])
                                 bs4_results_dict = ({'_id':_id, 'Timestamp': json_time, 'Num': successful_crawl_count, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'LocalLinks': local_link_list, 'ExtLinks': ext_link_list})
                                 
@@ -212,25 +212,22 @@ def main():
                                                     print(green(f'      Link URL: {yellow(link_url_addr[:132])}'))
                                                     mongodb_bs4_link_result_append(_id, bs_link_result_dict)
                                                     print(' ')
-
-                                                #------------------------------------
-                                                # else:
-                                                #     error_flag = True
-                                                #     link_url_addr = link_url
-                                                #     error = bs_link_result[1]
-                                                #     print(green(f'      Crawling link {yellow(link_num)}') + green(f' of {yellow(str(link_counter))}'))
-                                                #     print(green(f'      Link URL: {yellow(link_url_addr[:132])}'))
-                                                #     print("      " + red(f'Link {link_id} scrape failed'))
-                                                #     print(yellow("      Error details: ") + red(error))
-                                                #     print(' ')
-                                                #----------------------------------
                                                 
-                                            else:
+                                            elif link_already_crawled is True:
                                                 link_url_addr = link_url
                                                 print(green(f'      Crawling link {yellow(str(link_num))}') + green(f' of {yellow(str(link_counter))}'))
                                                 print(green(f'      Link URL: {yellow(link_url_addr[:132])}'))
                                                 print("      " + cyan(link_id) + red(' link ID already crawled'))
                                                 print(' ')
+
+                                            else:
+                                                link_url_addr = link_url
+                                                print(green(f'      Crawling link {yellow(str(link_num))}') + green(f' of {yellow(str(link_counter))}'))
+                                                print(green(f'      Link URL: {yellow(link_url_addr[:132])}'))
+                                                print("      " + cyan(link_id) + red(' link_already_crawled error'))
+                                                print("      " + red("Variable link_already_crawled value is: ") + red(str(link_already_crawled)))
+                                                print(' ')
+
                                         except Exception as err:
                                             print(yellow(dt_print()) + red("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
                                             print(yellow(f'Scrape of link {red(link_url[:132])} ') + (yellow("failed")))
@@ -238,8 +235,22 @@ def main():
                                             traceback.print_exception(type(err), err, err.__traceback__)
                                             print(yellow(f'On to the next one'))
                                             pass
-                            ### TODO
-                            ### ADD E-MAIL ADDRESSES FOUND IN LOCAL LINKS TO mail_found LIST
+
+                                    ### TODO
+                                    ### ADD E-MAIL ADDRESSES FOUND IN LOCAL LINKS TO mail_found LIST
+                                    link_found_mail_counter = 0 + len(link_found_mail_list)
+                                    if link_found_mail_counter == 0:
+                                        link_found_mail_list = 'None'
+                                    else:
+                                        link_found_mail_list = list(set(link_found_mail_list))
+                                        # email_count_appended = email_count + link_found_mail_counter
+                                        # found_mail.append(link_found_mail_list)
+                                        # found_mail = list(set(found_mail))
+                                        mongodb_bs4_link_mail_append_status = mongodb_bs4_link_mail_append(_id, link_found_mail_counter, link_found_mail_list)
+                                        if mongodb_bs4_link_mail_append_status is True:
+                                            print(green(f'      Appended {yellow(str(link_found_mail_counter))}') + green(f' mail addresses found in local links to {yellow(str(_id))}'))
+                                        else:
+                                            print(red(f'      Error during link mail uppend to ') + yellow(str(_id)))
 
                             else:
                                 error_flag = True
