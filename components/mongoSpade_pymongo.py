@@ -245,7 +245,7 @@ def mongodb_bs4_url_search(_id):
         traceback.print_exception(type(err), err, err.__traceback__)
         pass
 
-def mongodb_bs4_link_mail_append(_id, link_found_mail_counter, link_found_mail_list)
+def mongodb_bs4_link_mail_append(_id, link_found_mail_counter, link_found_mail_list):
     dbuser = urllib.parse.quote_plus(db_u)
     dbpass = urllib.parse.quote_plus(db_p)
     collection_name = "beautifulsoup"
