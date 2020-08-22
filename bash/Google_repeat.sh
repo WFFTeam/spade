@@ -1,7 +1,6 @@
 #!/bin/bash
 
 process="python3"
-cd /home/spider/spade_mongo/
 while true
 do
         if pgrep "$process" >/dev/null

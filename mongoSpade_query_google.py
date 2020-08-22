@@ -95,6 +95,7 @@ def main():
                                 found_mail = "Skipped"
                                 link_list = "Skipped"
                                 urlparse_host = bs_result[3]
+                                url_domain = urlparse_host
                                 email_count = 0
                                 link_counter = 0
                                 skipped_url_count += 1
@@ -113,17 +114,42 @@ def main():
                                 title_text = bs_result[0]
                                 found_mail = bs_result[1]
                                 link_list = bs_result[2]
+                                local_link_list = [] ### TEST
+                                ext_link_list = [] ### TEST
                                 urlparse_host = bs_result[3]
+                                url_domain = urlparse_host
+                              # print(cyan("###DEBUG### --- url_domain is : " + str(url_domain)))
+
+                                if isinstance(link_list, list): ## TEST ## local_link_list, ext_link_list
+                                    for url in link_list:   ## TEST
+                                        link_url_check = url ## TEST
+                                      # print(cyan("###DEBUG### --- link_url_check is : " + str(link_url_check)))
+                                        if url_domain in link_url_check:    ## TEST
+                                          # print(cyan("###DEBUG### --- Added to ") + red("local_link_list!!!"))
+                                            local_link_list.append(link_url_check) ###Check if local link
+                                        else:
+                                          # print(cyan("###DEBUG### --- Added to ") + red("ext_link_list!!!"))
+                                            ext_link_list.append(link_url_check)
                                 email_count = 0 + len(found_mail)
                                 if email_count == 0:
                                     found_mail = 'None'
+                                local_link_counter = 0 + len(local_link_list)
+                                if local_link_counter == 0:
+                                    local_link_list = 'None'
+                                ext_link_counter = 0 + len(ext_link_list)
+                                if ext_link_counter == 0:
+                                    ext_link_list = 'None'
                                 link_counter = 0 + len(link_list)
                                 if link_counter == 0:
                                     link_list = 'None'
                                 url_addr = url
-                                crawled_url_list.append(url_addr)                                
-                                bs4_results = ([successful_crawl_count, json_time, url_addr, title_text, found_mail, link_list])
-                                bs4_results_dict = ({'_id':_id, 'Timestamp': json_time, 'Num': successful_crawl_count, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'Links': link_list, 'Host': urlparse_host})
+                                crawled_url_list.append(url_addr)
+                              # print(cyan("###DEBUG### --- local_link_counter : ") + red(str(local_link_counter)))
+                              # print(cyan("###DEBUG### --- ext_link_counter : ") + red(str(ext_link_counter)))
+                              # bs4_results = ([successful_crawl_count, json_time, url_addr, title_text, found_mail, link_list]) ## !TEST
+                              # bs4_results_dict = ({'_id':_id, 'Timestamp': json_time, 'Num': successful_crawl_count, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'Links': link_list, 'Host': urlparse_host}) ## !TEST
+                                bs4_results = ([successful_crawl_count, json_time, url_addr, title_text, found_mail, local_link_list, ext_link_list])
+                                bs4_results_dict = ({'_id':_id, 'Timestamp': json_time, 'Num': successful_crawl_count, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'LocalLinks': local_link_list, 'ExtLinks': ext_link_list})
                                 
                                 print(yellow(dt_print()) + green("  ||  URL ") + green(str(url_count) + " of " + str(num_url)) + yellow(" ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
                                 print(green(f'Crawling URL {yellow(url_addr[:132])} '))
@@ -132,8 +158,8 @@ def main():
 
                                 link_num = 0
                                 crawled_link_list = []
-                                if isinstance(link_list, list):
-                                    for url in link_list:
+                                if isinstance(local_link_list, list):
+                                    for url in local_link_list:
                                         try:
                                             link_url = url
                                             link_id = hashlib.md5(link_url.encode('utf-8')).hexdigest()
