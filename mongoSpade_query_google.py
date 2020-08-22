@@ -60,7 +60,6 @@ def main():
             fetched_query = {'_id':_id, 'qnum': seq_num, 'Timestamp': json_time, 'Query': query_string, 'UrlList': googler_search_result}
             if fetched_query["UrlList"] != 'null':
                 query_delete = {'qnum': seq_num}
-               #mongodb_completed_query_copy(fetched_query)
                #mongodb_query_delete(query_delete)
                 mongodb_google_results_import(fetched_query)
 
@@ -146,8 +145,6 @@ def main():
                                 crawled_url_list.append(url_addr)
                               # print(cyan("###DEBUG### --- local_link_counter : ") + red(str(local_link_counter)))
                               # print(cyan("###DEBUG### --- ext_link_counter : ") + red(str(ext_link_counter)))
-                              # bs4_results = ([successful_crawl_count, json_time, url_addr, title_text, found_mail, link_list]) ## !TEST
-                              # bs4_results_dict = ({'_id':_id, 'Timestamp': json_time, 'Num': successful_crawl_count, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'Links': link_list, 'Host': urlparse_host}) ## !TEST
                                 bs4_results = ([successful_crawl_count, json_time, url_addr, title_text, found_mail, local_link_list, ext_link_list])
                                 bs4_results_dict = ({'_id':_id, 'Timestamp': json_time, 'Num': successful_crawl_count, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'LocalLinks': local_link_list, 'ExtLinks': ext_link_list})
                                 
@@ -158,6 +155,7 @@ def main():
 
                                 link_num = 0
                                 crawled_link_list = []
+                                link_found_mail_list = []
                                 if isinstance(local_link_list, list):
                                     for url in local_link_list:
                                         try:
@@ -198,6 +196,7 @@ def main():
                                                 else:
                                                     link_title_text = bs_link_result[0]
                                                     link_found_mail = bs_link_result[1]
+                                                    link_found_mail_list.append(link_found_mail)
                                                     link_link_list = bs_link_result[2]
                                                     link_urlparse_host = bs_link_result[3]
                                                     link_email_count = 0 + len(link_found_mail)
@@ -239,6 +238,9 @@ def main():
                                             traceback.print_exception(type(err), err, err.__traceback__)
                                             print(yellow(f'On to the next one'))
                                             pass
+                            ### TODO
+                            ### ADD E-MAIL ADDRESSES FOUND IN LOCAL LINKS TO mail_found LIST
+
                             else:
                                 error_flag = True
                                 url_addr = url
@@ -266,6 +268,7 @@ def main():
         total_urls = int(skipped_url_count) + int(successful_crawl_count) + int(bs_error_count)
         print(cyan(dt_print()) + yellow(" ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
         print(cyan("From " + str(total_urls) + " URLs, ") + (red(str(bs_error_count))) + red(" failed, ") + yellow(str(skipped_url_count)) + yellow(" skipped and ") + green(str(successful_crawl_count)) + green(" successfully crawled."))
+        mongodb_completed_query_copy(fetched_query)
         mongodb_query_delete(query_delete)
         time.sleep(2.0)
         countdown(wait_time)
