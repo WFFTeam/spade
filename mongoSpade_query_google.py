@@ -13,11 +13,13 @@ import signal
 import sys
 from components import *
 
+### TODO: Keyboard interrupt handler --------------------------------------------------------------------
 def signal_handler(signal, frame):
   # your code here
     sys.exit(0)
 
 signal.signal(signal.SIGINT, signal_handler)
+### TODO: Keyboard interrupt handler --------------------------------------------------------------------
 
 def main():
     parser = argparse.ArgumentParser()
@@ -41,7 +43,7 @@ def main():
     print(yellow(dt_print()) + yellow("  ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
     print(green(f'Grabing queries from collection {yellow(collection_name)} ') + green(f'in database {yellow(database_name)} ') + green(f' on mongoDB host {yellow(dbhost)}'))
     print(green("Grabing ") + cyan(load_num_queries) + green(" queries from MongoDB"))
-    queries = mongodb_query_search(load_num_queries)
+    queries = mongodb_load_queries(load_num_queries)
     qnum = 0
     if not queries:
         print(yellow("No queries in specified collection"))
@@ -60,7 +62,6 @@ def main():
             fetched_query = {'_id':_id, 'qnum': seq_num, 'Timestamp': json_time, 'Query': query_string, 'UrlList': googler_search_result}
             if fetched_query["UrlList"] != 'null':
                 query_delete = {'qnum': seq_num}
-               #mongodb_query_delete(query_delete)
                 mongodb_google_results_import(fetched_query)
 
 
@@ -86,13 +87,15 @@ def main():
                             continue
 
                         else:
-
+                            found_mail_list = []
                             bs_result = beautifulsoup_scrape(url)
                             if bs_result[2] == "!!!SKIPPED!!!":
                                 error_flag = 'Skipped'
                                 title_text = "Skipped"
                                 found_mail = "Skipped"
                                 link_list = "Skipped"
+                                local_link_list = "Skipped"
+                                ext_link_list = "Skipped"
                                 urlparse_host = bs_result[3]
                                 url_domain = urlparse_host
                                 email_count = 0
@@ -103,7 +106,7 @@ def main():
                                 bs4_results = ([skipped_url_count, json_time, url_addr, title_text, found_mail, link_list])
                                 print(yellow(dt_print()) + yellow("  ||  URL ") + green(str(url_count) + " of " + str(num_url)) + yellow(" ||  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="))
                                 print(yellow("Skipping host: ") + red(urlparse_host))
-                                bs4_results_dict = ({'_id':_id, 'Timestamp': json_time, 'Num': skipped_url_count, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'Links': link_list})
+                                bs4_results_dict = ({'_id':_id, 'Timestamp': json_time, 'Num': skipped_url_count, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'Links': link_list, 'LocalLinks': local_link_list, 'ExtLinks': ext_link_list})
                                 mongodb_bs4_results_import(bs4_results_dict, error_flag)
                                 print(' ')
 
@@ -117,19 +120,17 @@ def main():
                                 ext_link_list = []
                                 urlparse_host = bs_result[3]
                                 url_domain = urlparse_host
-                              # print(cyan("###DEBUG### --- url_domain is : " + str(url_domain))) ###DEBUG
-
                                 if isinstance(link_list, list): ## TEST ## local_link_list, ext_link_list
                                     for url in link_list:   ## TEST
                                         link_url_check = url ## TEST
-                                      # print(cyan("###DEBUG### --- link_url_check is : " + str(link_url_check))) ###DEBUG
                                         if url_domain in link_url_check:    ## TEST
-                                          # print(cyan("###DEBUG### --- Added to ") + red("local_link_list!!!")) ###DEBUG
                                             local_link_list.append(link_url_check) ###Check if local link
                                         else:
-                                          # print(cyan("###DEBUG### --- Added to ") + red("ext_link_list!!!")) ###DEBUG
                                             ext_link_list.append(link_url_check)
-                                email_count = 0 + len(found_mail)
+                                if isinstance(found_mail, list):
+                                    email_count = 0 + len(found_mail)
+                                else:
+                                    email_count = 0
                                 if email_count == 0:
                                     found_mail = 'None'
                                 local_link_counter = 0 + len(local_link_list)
@@ -143,8 +144,9 @@ def main():
                                     link_list = 'None'
                                 url_addr = url
                                 crawled_url_list.append(url_addr)
-                              # print(cyan("###DEBUG### --- local_link_counter : ") + red(str(local_link_counter))) ###DEBUG
-                              # print(cyan("###DEBUG### --- ext_link_counter : ") + red(str(ext_link_counter))) ###DEBUG
+                                if found_mail != 'None':
+                                    found_mail_list.extend(found_mail)
+
                                 bs4_results = ([successful_crawl_count, json_time, url_addr, title_text, found_mail, local_link_list, ext_link_list])
                                 bs4_results_dict = ({'_id':_id, 'Timestamp': json_time, 'Num': successful_crawl_count, 'URL': url_addr, 'Title': title_text, 'Mailnum': email_count, 'Email': found_mail, 'Linknum': link_counter, 'LocalLinks': local_link_list, 'ExtLinks': ext_link_list})
                                 
@@ -153,12 +155,13 @@ def main():
                                 mongodb_bs4_results_import(bs4_results_dict, error_flag)
                                 print(' ')
 
-                                link_num = 0
+                                link_num = link_found_mail_counter = 0
                                 crawled_link_list = []
                                 link_found_mail_list = []
                                 if isinstance(local_link_list, list):
                                     for url in local_link_list:
                                         try:
+                                            link_email_count = 0
                                             link_url = url
                                             link_id = hashlib.md5(link_url.encode('utf-8')).hexdigest()
                                             json_time = json_timestamp()
@@ -179,7 +182,7 @@ def main():
                                                     skipped_link_count += 1
                                                     link_url_addr = link_url
 
-                                                    print(green(f'      Crawling link {yellow(str(link_num))}') + green(f' of {yellow(str(link_counter))}'))
+                                                    print(green(f'      Crawling link {yellow(str(link_num))}') + green(f' of {yellow(str(local_link_counter))}'))
                                                     print(green(f'      Link URL: {yellow(link_url_addr[:132])}'))
                                                     print("      " + cyan(link_id) + yellow(' link skipped'))
                                                     print(' ')
@@ -187,7 +190,7 @@ def main():
                                                     error_flag = True
                                                     link_url_addr = link_url
                                                     error = bs_link_result[1]
-                                                    print(green(f'      Crawling link {yellow(link_num)}') + green(f' of {yellow(str(link_counter))}'))
+                                                    print(green(f'      Crawling link {yellow(link_num)}') + green(f' of {yellow(str(local_link_counter))}'))
                                                     print(green(f'      Link URL: {yellow(link_url_addr[:132])}'))
                                                     print("      " + red(f'Link {link_id} scrape failed'))
                                                     print(yellow("      Error details: ") + red(error))
@@ -196,33 +199,35 @@ def main():
                                                 else:
                                                     link_title_text = bs_link_result[0]
                                                     link_found_mail = bs_link_result[1]
-                                                    link_found_mail_list.append(link_found_mail)
                                                     link_link_list = bs_link_result[2]
                                                     link_urlparse_host = bs_link_result[3]
                                                     link_email_count = 0 + len(link_found_mail)
                                                     if link_email_count == 0:
                                                         link_found_mail = 'None'
+                                                    else:
+                                                        link_found_mail_list.extend(link_found_mail)
+                                                        link_found_mail_counter = link_found_mail_counter + link_email_count
                                                     link_link_counter = 0 + len(link_link_list)
                                                     if link_link_counter == 0:
                                                         link_link_list = 'None'
                                                     link_url_addr = link_url
                                                     crawled_link_list.append(link_url_addr)
                                                     bs_link_result_dict = ({'link_id': link_id, 'Timestamp': json_time, 'Num': link_num, 'URL': link_url_addr, 'Title': link_title_text, 'Mailnum': link_email_count, 'Email': link_found_mail, 'Linknum': link_link_counter, 'Links': link_link_list, 'Host': link_urlparse_host})
-                                                    print(green(f'      Crawling link {yellow(str(link_num))}') + green(f' of {yellow(str(link_counter))}'))
+                                                    print(green(f'      Crawling link {yellow(str(link_num))}') + green(f' of {yellow(str(local_link_counter))}'))
                                                     print(green(f'      Link URL: {yellow(link_url_addr[:132])}'))
                                                     mongodb_bs4_link_result_append(_id, bs_link_result_dict)
                                                     print(' ')
                                                 
                                             elif link_already_crawled is True:
                                                 link_url_addr = link_url
-                                                print(green(f'      Crawling link {yellow(str(link_num))}') + green(f' of {yellow(str(link_counter))}'))
+                                                print(green(f'      Crawling link {yellow(str(link_num))}') + green(f' of {yellow(str(local_link_counter))}'))
                                                 print(green(f'      Link URL: {yellow(link_url_addr[:132])}'))
                                                 print("      " + cyan(link_id) + red(' link ID already crawled'))
                                                 print(' ')
 
                                             else:
                                                 link_url_addr = link_url
-                                                print(green(f'      Crawling link {yellow(str(link_num))}') + green(f' of {yellow(str(link_counter))}'))
+                                                print(green(f'      Crawling link {yellow(str(link_num))}') + green(f' of {yellow(str(local_link_counter))}'))
                                                 print(green(f'      Link URL: {yellow(link_url_addr[:132])}'))
                                                 print("      " + cyan(link_id) + red(' link_already_crawled error'))
                                                 print("      " + red("Variable link_already_crawled value is: ") + red(str(link_already_crawled)))
@@ -236,19 +241,20 @@ def main():
                                             print(yellow(f'On to the next one'))
                                             pass
 
-                                    ### TODO
-                                    ### ADD E-MAIL ADDRESSES FOUND IN LOCAL LINKS TO mail_found LIST
-                                    link_found_mail_counter = 0 + len(link_found_mail_list)
+                                    if link_found_mail_list == "[[]]":
+                                        link_found_mail_list = ''
                                     if link_found_mail_counter == 0:
                                         link_found_mail_list = 'None'
                                     else:
                                         link_found_mail_list = list(set(link_found_mail_list))
-                                        # email_count_appended = email_count + link_found_mail_counter
-                                        # found_mail.append(link_found_mail_list)
-                                        # found_mail = list(set(found_mail))
-                                        mongodb_bs4_link_mail_append_status = mongodb_bs4_link_mail_append(_id, link_found_mail_counter, link_found_mail_list)
+                                        found_mail_list.extend(link_found_mail_list)
+                                        found_mail_list = list(set(found_mail_list))
+                                        link_found_mail_counter = 0 + len(link_found_mail_list)
+                                        total_found_mail_counter = 0 + len(found_mail_list)
+                                        mongodb_bs4_link_mail_append_status = mongodb_bs4_link_mail_append(_id, found_mail_list)
                                         if mongodb_bs4_link_mail_append_status is True:
                                             print(green(f'      Appended {yellow(str(link_found_mail_counter))}') + green(f' mail addresses found in local links to {yellow(str(_id))}'))
+                                            print('')
                                         else:
                                             print(red(f'      Error during link mail uppend to ') + yellow(str(_id)))
 
@@ -261,7 +267,7 @@ def main():
                                 print(yellow(f'Scrape of {red(url_addr[:132])} ') + (yellow("failed")))
                                 print(yellow("Error: beautifulsoup_scrape function encountered an error."))
                                 print(yellow("Error details: ") + red(error))
-                                bs4_results_dict = ({'_id':_id, 'Timestamp': json_time, 'Num': bs_error_count, 'URL': url_addr, 'Title': "bs4_Error", 'Mailnum': 0, 'Email': 'None', 'Linknum': 0, 'Links': 'None', 'ErrorInfo': error})
+                                bs4_results_dict = ({'_id':_id, 'Timestamp': json_time, 'Num': bs_error_count, 'URL': url_addr, 'Title': "bs4_Error", 'Mailnum': 0, 'Email': 'None', 'Linknum': 0, 'Links': 'None', 'LocalLinks': 'None', 'ExtLinks': 'None', 'ErrorInfo': error})
                                 mongodb_bs4_results_import(bs4_results_dict, error_flag) ### FAILED URL CRAWL TRACKING
                                 print(' ')
 

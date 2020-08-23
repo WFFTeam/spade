@@ -40,7 +40,7 @@ def beautifulsoup_scrape(url):
     ext_skip = any(skip_ext in url_path for skip_ext in skip_ext)
 
     ### URLPARSE dictionary
-
+    ############################################################################################################################################################
     # url_parsed_dict = {}
     # parse_dict = parse_url(url)
     # parse_scheme = parse_dict["scheme"]
@@ -50,6 +50,7 @@ def beautifulsoup_scrape(url):
     # parse_params = parse_dict["params"]
     # parse_frags = parse_dict["frags"]
     # parse_url_dict = { 'scheme': parse_scheme, 'netlock': parse_host, 'path': parse_path, 'query': parse_query, 'params': parse_params, 'frags': parse_frags } 
+    ############################################################################################################################################################
     
     if domain_skip is not True and ext_skip is not True:
         try:
@@ -73,12 +74,7 @@ def beautifulsoup_scrape(url):
             for link in soup.findAll('a', attrs={'href': re.compile("^http://")}):
                 link_list.append(link.get('href'))
             link_list = list(set(link_list))
-            
             bs4_result = ([title_text, found_mail, link_list, url_host])
-
-           #beautifulsoup dictionary
-           #bs4_result_dict = ({'Title': bs4_result[0], 'Mail_addresses': bs4_result[1], 'Link_list': bs4_result[2], 'Hostname': url_host})
-            
             return bs4_result
 
         except Exception as err:
@@ -86,7 +82,7 @@ def beautifulsoup_scrape(url):
             error_notif = str(err)
 
             error_return = ([title_error, error_notif, "!!!ERROR!!!", url_host])
-           #traceback.print_exception(type(err), err, err.__traceback__)
+           #traceback.print_exception(type(err), err, err.__traceback__) ### DEBUG
             return error_return
     else:
         if domain_skip is True:
@@ -96,22 +92,23 @@ def beautifulsoup_scrape(url):
         return bs4_result
 
 ### ALT BS SCRAPING FUNCTION --- TODO
+################################################################################################
 # def alt_bs4_scrape(url):
 #     try:
 #         error_count = 0
 #         error_queries = []
 #         link_list = []
-
+#
 #         url_host = urlparse(url).hostname
 #         url_path = urlparse(url).path
-       
+#      
 #         domain_skip = any(skip_host in url_host for skip_host in skip_hosts)
 #         ext_skip = any(skip_ext in url_path for skip_ext in skip_ext)
-
+#
 #         html = requests.get(url)
-#        #soup = BeautifulSoup(html.decode('utf-8', 'ignore'), "lxml") ### OLD SOUP METHOD
+#         soup = BeautifulSoup(html.decode('utf-8', 'ignore'), "lxml") ### OLD SOUP METHOD
 #         soup = BeautifulSoup(html.text, "html.parser") 
-
+#
 #         title_text = str(soup.title.text)
 #         found_mail = re.findall(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+', soup.text)
 #         for link in soup.findAll('a', attrs={'href': re.compile("^http://")}):
@@ -123,8 +120,9 @@ def beautifulsoup_scrape(url):
 #         mail_error = title_error = "BeautifulSoup error"
 #         error_notif = str(err)
 #         error_return = ([title_error, error_notif, "!!!ERROR!!!", url_host])
-#        #traceback.print_exception(type(err), err, err.__traceback__)
+#         traceback.print_exception(type(err), err, err.__traceback__)
 #         return error_return
+################################################################################################
 
 def main():
     parser = argparse.ArgumentParser()

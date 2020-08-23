@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 from components.mongoSpade_stdout import *
 from components.config_db import *
 
-def mongodb_query_search(load_num_queries):
+def mongodb_load_queries(load_num_queries):
     collection_name = "queries"
     dbuser = urllib.parse.quote_plus(db_u)
     dbpass = urllib.parse.quote_plus(db_p)
@@ -32,9 +32,9 @@ def mongodb_query_search(load_num_queries):
             list_queries.append(last_sequence)
         return list_queries
 
-    except Exception as error:
+    except Exception as err:
         print(red("ERROR --- Export of queries from DB interrupted"))
-        print(yellow("Error code: ") + red(error))
+        print(yellow("Error code: ") + red(err))
         traceback.print_exception(type(err), err, err.__traceback__)
         query_search_error = "!!!ERROR!!!"
         return query_search_error
@@ -50,9 +50,9 @@ def mongodb_completed_query_copy(fetched_query):
     try:
         backup_query = db_cm.insert_one(fetched_query)
         print(green("Copied ") + cyan(fetched_query["_id"]) + green(" query to backup collection ") + cyan(collection_name))
-    except Exception as error:
+    except Exception as err:
         print(red("ERROR --- Export of fetched queries interrupted"))
-        print(yellow("Error code: ") + red(error))
+        print(yellow("Error code: ") + red(err))
         traceback.print_exception(type(err), err, err.__traceback__)
         print(" ")
 
@@ -67,9 +67,9 @@ def mongodb_query_delete(query_delete):
         deleted_query = db_cm.delete_one(query_delete)
         deleted_query_num = str(query_delete).strip("{}").split(':')[1]
         print(green("Removed ") + cyan("query No." + deleted_query_num) + green(f' from collection {yellow(collection_name)}'))
-    except Exception as error:
+    except Exception as err:
         print(red("ERROR --- Removal of finished queries failed"))
-        print(yellow("Error code: ") + red(error))
+        print(yellow("Error code: ") + red(err))
         traceback.print_exception(type(err), err, err.__traceback__)
         print(" ")
 
@@ -119,6 +119,19 @@ def mongodb_bs4_results_import(bs4_results_dict, error_flag):
     page_title = re.sub(r'[\n\r\t]*', '', bs4_results_dict["Title"])
     email_count = bs4_results_dict["Mailnum"]
     link_counter = bs4_results_dict["Linknum"]
+    local_link_list = bs4_results_dict["LocalLinks"]
+    ext_link_list = bs4_results_dict["ExtLinks"]
+
+    if isinstance(local_link_list, list):
+        local_link_counter = 0 + len(local_link_list)
+    else:
+        local_link_counter = 0
+
+    if isinstance(ext_link_list, list):
+        ext_link_counter = 0 + len(ext_link_list)
+    else:
+        ext_link_counter = 0
+
     _id = bs4_results_dict["_id"]
     try:
         bs4_results_collection = db_cm.insert_one(bs4_results_dict)
@@ -128,10 +141,21 @@ def mongodb_bs4_results_import(bs4_results_dict, error_flag):
             print(green(f'Found {cyan(email_count)} ') + green(f'e-mail addresses '))
         else:
             print(green(f'Found {red(email_count)} ') + green(f'e-mail addresses '))
-        if link_counter != 0:
-            print(green(f'Found {cyan(link_counter)} ') + green('links '))
+
+        # if link_counter != 0:
+        #     print(green(f'Found {cyan(link_counter)} ') + green('links '))
+        # else:
+        #     print(green(f'Found {red(link_counter)} ') + green('links '))
+
+        if local_link_counter != 0:
+            print(green(f'Found {cyan(local_link_counter)} ') + green('local links '))
         else:
-            print(green(f'Found {red(link_counter)} ') + green('links '))
+            print(green(f'Found {red(local_link_counter)} ') + green('local links '))
+
+        if ext_link_counter != 0:
+            print(green(f'Found {cyan(ext_link_counter)} ') + green('external links '))
+        else:
+            print(green(f'Found {red(ext_link_counter)} ') + green('external links '))
 
         if db_cm.count_documents({ '_id': _id }, limit = 1) != 0:
             print(green(f'Successfully imported to collection {cyan(collection_name)} ') + green(f'with _id {cyan(_id)}'))
@@ -141,7 +165,7 @@ def mongodb_bs4_results_import(bs4_results_dict, error_flag):
     except pymongo.errors.DuplicateKeyError as err:
         print(yellow(f'_id {red(_id)}') + yellow(" already exists"))
         print(red('Skipping'))
-        traceback.print_exception(type(err), err, err.__traceback__)
+      # traceback.print_exception(type(err), err, err.__traceback__)
         print(" ")
         return False
 
@@ -155,7 +179,7 @@ def mongodb_bs4_results_import(bs4_results_dict, error_flag):
         try:
             bs4_fails_collection = db_cm.insert_one(bs4_results_dict)
             print(yellow(f'Imported collection to {red(collection_name)} ') + yellow(f'with _id {red(_id)}'))
-        except Exception as error:
+        except Exception as err:
             print(yellow(f'MongoDB secondary import to {red(collection_name)} ') + (yellow("failed")))
             pass
 
@@ -199,9 +223,9 @@ def mongodb_bs4_link_result_append(_id, bs_link_result_dict):
             print(green("      Link ID ") + (cyan(link_id)) + (green(" appended to document ")) + (cyan(_id)))
         else:
             print(red(f'      Link ID: {link_id} in the collection {cyan(collection_name)}') + red(" not found"))
-    except Exception as error:
+    except Exception as err:
         print(red(f'      Link ID {cyan(link_id)} {red("in document ")} {cyan(_id)} {red("failed")}'))
-        print(yellow("      Error details: ") + red(error))
+        print(yellow("      Error details: ") + red(err))
         traceback.print_exception(type(err), err, err.__traceback__)
         print(' ')
         pass
@@ -220,9 +244,9 @@ def mongodb_bs4_link_search(link_id):
             return True
         else:
             return False
-    except Exception as error:
+    except Exception as err:
         print(red(f'MongoDB query of link_id {cyan(link_id)} {red(" failed.")}'))
-        print(yellow("Error details: ") + red(error))
+        print(yellow("Error details: ") + red(err))
         traceback.print_exception(type(err), err, err.__traceback__)
         pass
 
@@ -239,25 +263,73 @@ def mongodb_bs4_url_search(_id):
             return True
         else:
             return False
-    except Exception as error:
+    except Exception as err:
         print(red(f'MongoDB query of link_id {cyan(link_id)} {red(" failed.")}'))
-        print(yellow("Error details: ") + red(error))
+        print(yellow("Error details: ") + red(err))
         traceback.print_exception(type(err), err, err.__traceback__)
         pass
 
-def mongodb_bs4_link_mail_append(_id, link_found_mail_counter, link_found_mail_list):
+
+### EXAMPLE: query_dict = {'Email':{"$not":{"$eq":'None'}}} ; collection = 'beautifulsoup' ; sort_list = "'Email', -1" ; display_dict = { 'Url': 1, 'Title': 1, 'Email': 1 }
+###          show_results = mongodb_query_search( collection, query_dict, sort_list, display_dict )
+def mongodb_query_search(collection, query_dict, sort_list, display_dict ):
+    dbuser = urllib.parse.quote_plus(db_u)
+    dbpass = urllib.parse.quote_plus(db_p)
+    collection_name = collection
+    mng_client = pymongo.MongoClient('mongodb://%s:%s@%s:%s/%s' % (dbuser, dbpass, dbhost, dbport, user_db))
+    mng_db = mng_client[database_name]
+    db_cm = mng_db[collection_name]
+    json_time = json_timestamp()
+    query_results_list = []
+    query_results_instance = {}
+    query_dict = dict(query_dict)
+
+    try:
+        if not sort_list and display_dict:
+            query_results_pointer = db_cm.find(( query_dict ),( display_dict ))
+        elif sort_list and not display_dict:
+            query_results_pointer = db_cm.find(( query_dict )).sort( sort_list )
+        elif not display_dict and not sort_list:
+            query_results_pointer = db_cm.find(( query_dict ))
+        else:
+            query_results_pointer = db_cm.find(( query_dict ),( display_dict )).sort( sort_list )
+
+        for item in query_results_pointer:
+            try:
+                query_results_instance = item
+                query_results_instance = dict(query_results_instance)
+                query_results_list.append(query_results_instance)
+
+            except Exception as err:
+                print(red(f'Function mongodb_query_search at {cyan(item)} {red(" failed.")}'))
+                print(yellow("Error details: ") + red(err))
+                traceback.print_exception(type(err), err, err.__traceback__)
+                pass
+
+    except Exception as err:
+        print(red(f'MongoDB query of query {cyan(query_dict)} {red(" failed.")}'))
+        print(yellow("Error details: ") + red(err))
+        traceback.print_exception(type(err), err, err.__traceback__)
+        pass
+
+    return query_results_list
+
+
+def mongodb_bs4_link_mail_append(_id, found_mail_list):
+    _id_dict = {}
     dbuser = urllib.parse.quote_plus(db_u)
     dbpass = urllib.parse.quote_plus(db_p)
     collection_name = "beautifulsoup"
     mng_client = pymongo.MongoClient('mongodb://%s:%s@%s:%s/%s' % (dbuser, dbpass, dbhost, dbport, user_db))
     mng_db = mng_client[database_name]
     db_cm = mng_db[collection_name]
+    found_mail_counter = 0 + len(found_mail_list)
+    _id_dict = { '_id': _id }
     try:
-        bs4_email_append = db_cm.update_one(filter={'_id':_id}, update={'$addToSet':{ 'Email': link_found_mail_list } })
-        bs4_email_count_update = db_cm.update_one(filter={'_id':_id}, update={'$inc':{ 'Mailnum': link_found_mail_counter } })
+        bs4_email_append = db_cm.update_one(filter=_id_dict, update={ '$set':{ 'Mailnum': found_mail_counter, 'Email': found_mail_list } })
         return True
-    except Exception as error:
+    except Exception as err:
         print(red(f'MongoDB mail append of _id {cyan(_id)} {red(" failed.")}'))
-        print(yellow("Error details: ") + red(error))
+        print(yellow("Error details: ") + red(err))
         traceback.print_exception(type(err), err, err.__traceback__)
         pass
