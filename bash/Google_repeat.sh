@@ -1,5 +1,6 @@
 #!/bin/bash
 
+SSL_CERT_DIR=/etc/ssl/certs
 process="python3"
 while true
 do

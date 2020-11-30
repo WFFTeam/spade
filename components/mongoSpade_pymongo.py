@@ -230,7 +230,7 @@ def mongodb_bs4_link_result_append(_id, bs_link_result_dict):
         print(' ')
         pass
 
-def mongodb_bs4_link_search(link_id):
+def mongodb_bs4_link_check(link_id):
     dbuser = urllib.parse.quote_plus(db_u)
     dbpass = urllib.parse.quote_plus(db_p)
     collection_name = "beautifulsoup"

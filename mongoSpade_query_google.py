@@ -165,7 +165,7 @@ def main():
                                             link_url = url
                                             link_id = hashlib.md5(link_url.encode('utf-8')).hexdigest()
                                             json_time = json_timestamp()
-                                            link_already_crawled = mongodb_bs4_link_search(link_id)
+                                            link_already_crawled = mongodb_bs4_link_check(link_id)
                                             link_num += 1
                                             skipped_link_count = 0
                                             if link_already_crawled is not True:

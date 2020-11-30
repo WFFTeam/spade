@@ -7,6 +7,8 @@ import typing
 import textwrap
 import traceback
 import requests
+import certifi
+import ssl
 from bs4 import BeautifulSoup
 from urllib.error import HTTPError
 from urllib.parse import urlparse
@@ -14,6 +16,16 @@ from urllib.request import Request, urlopen
 
 from components.mongoSpade_stdout import *
 from components.config_skip import *
+
+def https_fix():  ### HTTPS FIX --- TEST
+    try:
+    	_create_unverified_https_context = ssl._create_unverified_context
+    except AttributeError:
+    # Legacy Python that doesn't verify HTTPS certificates by default
+        pass
+    else:
+    # Handle target environment that doesn't support HTTPS verification
+    	ssl._create_default_https_context = _create_unverified_https_context
 
 def parse_url(url):
     parse_results = urlparse(url)
@@ -62,7 +74,10 @@ def beautifulsoup_scrape(url):
             'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0'
             }
 
+            https_fix()
             req = Request(url,headers=hdr)
+            #req = Request(url,headers=hdr,context=ssl.create_default_context(cafile=certifi.where()))
+            #page = urlopen(req, timeout = 5, context=ssl.create_default_context(cafile=certifi.where()))
             page = urlopen(req, timeout = 5)
             html = page.read() 
 
@@ -82,7 +97,7 @@ def beautifulsoup_scrape(url):
             error_notif = str(err)
 
             error_return = ([title_error, error_notif, "!!!ERROR!!!", url_host])
-           #traceback.print_exception(type(err), err, err.__traceback__) ### DEBUG
+            traceback.print_exception(type(err), err, err.__traceback__) ### DEBUG
             return error_return
     else:
         if domain_skip is True:
